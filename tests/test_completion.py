@@ -68,7 +68,7 @@ def test_get_completion_file_path():
     powershell_path = get_completion_file_path("powershell")
 
     assert bash_path == home / ".local/share/bash-completion/completions/foodtruck"
-    assert zsh_path == home / ".zsh/completions/_foodtruck"
+    assert zsh_path == home / ".zsh/completion/_foodtruck"
     assert powershell_path == home / "Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1"
 
     with pytest.raises(ValueError, match="Unsupported shell"):

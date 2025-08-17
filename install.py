@@ -192,7 +192,9 @@ def install_completion_scripts(shell_name: str, shell_config: Path) -> None:
                 if shell_name == "bash":
                     completion_source = f"source {completion_path}"
                 elif shell_name == "zsh":
-                    completion_source = "autoload -U compinit && compinit"
+                    # For Zsh, we need to add the completions directory to fpath
+                    completion_dir = completion_path.parent
+                    completion_source = f"fpath=({completion_dir} $fpath)\nautoload -U compinit && compinit"
 
                 if completion_source and completion_source not in content:
                     with shell_config.open("a", encoding="utf-8") as f:
