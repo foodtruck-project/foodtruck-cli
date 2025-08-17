@@ -8,6 +8,12 @@ Uma interface de linha de comando para gerenciamento de food trucks construída 
 - Python 3.13 ou superior
 - UV package manager
 
+### Script de Instalação
+
+O projeto oferece um script de instalação cross-platform:
+
+- **`install.py`** - Script Python cross-platform (Windows, Linux, macOS)
+
 ### Instalação
 ```bash
 # Clone o repositório
@@ -22,7 +28,9 @@ uv run task init
 ```bash
 # Instalar dependências e CLI
 uv sync
-./install.sh
+
+# Usando o script Python (cross-platform)
+python3 install.py
 ```
 
 ## 📖 Como Usar
@@ -56,9 +64,30 @@ foodtruck-cli/
 │   ├── __init__.py     # Inicialização do pacote
 │   └── main.py        # Ponto de entrada CLI
 ├── pyproject.toml     # Configuração do projeto
-├── install.sh        # Script de instalação
-└── README.md        # Este arquivo
+├── install.py         # Script de instalação Python (cross-platform)
+└── README.md         # Este arquivo
 ```
+
+## 🔧 Script de Instalação
+
+### Características do `install.py`
+
+| Característica | Valor |
+|----------------|-------|
+| **Plataforma** | Cross-platform (Windows, Linux, macOS) |
+| **Dependências** | Python 3.6+ |
+| **Shell Support** | zsh, bash, PowerShell |
+| **Wrapper Script** | `.bat` (Windows), `.sh` (Unix) |
+| **Encoding** | UTF-8 com fallback |
+
+### Vantagens
+
+- ✅ Funciona em Windows, Linux e macOS
+- ✅ Suporte nativo ao PowerShell no Windows
+- ✅ Melhor tratamento de encoding
+- ✅ Criação automática de diretórios
+- ✅ Mensagens de erro mais detalhadas
+- ✅ Código mais modular e testável
 
 ## 🔧 Configuração de Qualidade
 
