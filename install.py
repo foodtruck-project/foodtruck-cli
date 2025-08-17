@@ -9,6 +9,9 @@ import platform
 import shutil
 import subprocess
 import sys
+import tarfile
+import urllib.request
+import zipfile
 from pathlib import Path
 
 
@@ -165,62 +168,102 @@ def install_package() -> None:
         sys.exit(1)
 
 
-def install_completion_scripts(shell_name: str, shell_config: Path) -> None:
-    """Install completion scripts for the detected shell"""
+def get_carapace_download_url() -> str:
+    """Get the appropriate carapace-bin download URL for the current platform"""
+    version = "1.4.1"
+
+    if platform.system() == "Windows":
+        return f"https://github.com/carapace-sh/carapace-bin/releases/download/v{version}/carapace-bin_{version}_windows_amd64.zip"
+    if platform.system() == "Darwin":  # macOS
+        return f"https://github.com/carapace-sh/carapace-bin/releases/download/v{version}/carapace-bin_{version}_darwin_amd64.tar.gz"
+    # For Linux and other Unix-like systems
+    return f"https://github.com/carapace-sh/carapace-bin/releases/download/v{version}/carapace-bin_{version}_linux_386.tar.gz"
+
+
+def download_carapace(script_dir: Path) -> Path:
+    """Download and extract carapace-bin"""
+    url = get_carapace_download_url()
+    filename = url.split("/")[-1]
+    download_path = script_dir / filename
+
+    # Check if the download file already exists
+    if download_path.exists():
+        print_warning(f"Arquivo já existe: {download_path}")
+        print_step("Usando arquivo existente...")
+    else:
+        print_step(f"Baixando carapace-bin: {filename}")
+        try:
+            # Download the file
+            urllib.request.urlretrieve(url, download_path)
+            print_success(f"Download concluído: {download_path}")
+        except Exception as e:
+            print_error(f"Erro ao baixar carapace-bin: {e}")
+            sys.exit(1)
+
     try:
-        # Import the completion command after package installation
-        from foodtruck_cli.commands.completion import (
-            get_completion_file_path,
-            install_completion,
-        )
+        # Extract the file
+        extract_dir = script_dir / "carapace-bin"
+        extract_dir.mkdir(exist_ok=True)
 
-        print_step("Instalando scripts de completion...")
+        if filename.endswith(".zip"):
+            # Windows zip file
+            with zipfile.ZipFile(download_path, "r") as zip_ref:
+                zip_ref.extractall(extract_dir)
+        else:
+            # Linux tar.gz file
+            with tarfile.open(download_path, "r:gz") as tar_ref:
+                tar_ref.extractall(extract_dir)
 
-        if shell_name in ["bash", "zsh"]:
-            # Install completion script
-            completion_path = get_completion_file_path(shell_name)
-            if install_completion(shell_name, completion_path):
-                print_success(
-                    f"Completion {shell_name} instalado em: {completion_path}"
-                )
+        print_success(f"Carapace-bin extraído para: {extract_dir}")
 
-                # Add completion source to shell config if not already present
-                with shell_config.open("r", encoding="utf-8") as f:
-                    content = f.read()
+        # Clean up the downloaded file
+        download_path.unlink()
+        print_success("Arquivo de download removido")
 
-                completion_source = ""
-                if shell_name == "bash":
-                    completion_source = f"source {completion_path}"
-                elif shell_name == "zsh":
-                    # For Zsh, we need to add the completions directory to fpath
-                    completion_dir = completion_path.parent
-                    completion_source = f"fpath=({completion_dir} $fpath)\nautoload -U compinit && compinit"
+        # Find the carapace executable
+        carapace_exe = None
+        for file in extract_dir.rglob("*"):
+            if file.is_file() and file.name in {"carapace", "carapace.exe"}:
+                carapace_exe = file
+                break
 
-                if completion_source and completion_source not in content:
-                    with shell_config.open("a", encoding="utf-8") as f:
-                        f.write(f"\n# Food Truck CLI Completion\n{completion_source}\n")
-                    print_success(f"Completion configurado em {shell_config}")
-                else:
-                    print_warning(f"Completion já configurado em {shell_config}")
-            else:
-                print_warning(f"Falha ao instalar completion {shell_name}")
+        if carapace_exe:
+            # Make executable on Unix systems
+            if platform.system() != "Windows":
+                carapace_exe.chmod(0o755)
+            print_success(f"Carapace-bin instalado: {carapace_exe}")
+            return carapace_exe
+        print_error("Executável carapace não encontrado no arquivo extraído")
+        sys.exit(1)
 
-        elif shell_name == "powershell":
-            # For PowerShell, we'll add the completion script to the profile
-            completion_script = Path(__file__).parent / "completions" / "foodtruck.ps1"
-            if completion_script.exists():
-                with shell_config.open("a", encoding="utf-8") as f:
-                    f.write(f"\n# Food Truck CLI Completion\n. '{completion_script}'\n")
-                print_success(f"Completion PowerShell configurado em {shell_config}")
-            else:
-                print_warning("Script de completion PowerShell não encontrado")
-
-    except ImportError:
-        print_warning(
-            "Não foi possível instalar completion scripts (pacote não instalado)"
-        )
     except Exception as e:
-        print_warning(f"Erro ao instalar completion: {e}")
+        print_error(f"Erro ao extrair carapace-bin: {e}")
+        if download_path.exists():
+            download_path.unlink()
+        sys.exit(1)
+
+
+def install_carapace(script_dir: Path) -> None:
+    """Install carapace-bin if not already present"""
+    carapace_dir = script_dir / "carapace-bin"
+
+    # Check if carapace is already installed
+    if carapace_dir.exists():
+        carapace_exe = None
+        for file in carapace_dir.rglob("*"):
+            if file.is_file() and file.name in {"carapace", "carapace.exe"}:
+                carapace_exe = file
+                break
+
+        if carapace_exe:
+            print_warning(f"Carapace-bin já instalado: {carapace_exe}")
+            return
+
+    # Download and install carapace-bin
+    download_carapace(script_dir)
+
+
+
 
 
 def main():
@@ -259,9 +302,9 @@ def main():
     print_step("Instalando pacote...")
     install_package()
 
-    # Install completion scripts
-    if shell_name and shell_config:
-        install_completion_scripts(shell_name, shell_config)
+    # Install carapace-bin
+    print_step("Instalando carapace-bin...")
+    install_carapace(script_dir)
 
     # Success message
     print_success("Instalação concluída!")
