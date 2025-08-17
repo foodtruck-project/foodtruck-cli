@@ -29,6 +29,12 @@ lint = "uv run ruff check ."
 typecheck = "uv run mypy ."
 # Test
 test = "uv run pytest"
+# Run only unit tests (fast, no system calls) - DEFAULT for CI/CD
+test-unit = "uv run pytest -m unit"
+# Run only integration tests (real system calls) - EXPENSIVE, use sparingly
+test-integration = "uv run pytest -m integration"
+# Run only application tests (unit tests only, skip platform-specific) - COST-EFFECTIVE
+test-app = "uv run pytest -m unit"
 
 [tool.taskipy.settings]
 override = false
@@ -51,3 +57,19 @@ ignore = ["E501", "B008", "C901", "T201", "PLW1510", "PLC0415"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+# Test markers
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "unit: marks tests as unit tests (deselect with '-m \"not unit\"')",
+    "linux: marks tests as Linux-specific",
+    "windows: marks tests as Windows-specific", 
+    "macos: marks tests as macOS-specific",
+]
