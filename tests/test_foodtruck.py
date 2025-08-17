@@ -5,6 +5,11 @@ Tests for the Food Truck CLI
 
 import subprocess
 
+import pytest
+
+# Mark all unit tests
+pytestmark = pytest.mark.unit
+
 
 def test_cli_runs(cli_command, project_root):
     """Test that the CLI runs without errors"""
@@ -49,3 +54,18 @@ def test_setup_command_help(cli_command, project_root):
         f"Setup help failed with return code {result.returncode}"
     )
     assert "setup" in result.stdout, "Expected setup help not found"
+
+
+def test_check_command_help(cli_command, project_root):
+    """Test that the check command shows help information"""
+    result = subprocess.run(
+        [*cli_command, "check", "--help"],
+        capture_output=True,
+        text=True,
+        cwd=project_root,
+    )
+
+    assert result.returncode == 0, (
+        f"Check help failed with return code {result.returncode}"
+    )
+    assert "check" in result.stdout, "Expected check help not found"

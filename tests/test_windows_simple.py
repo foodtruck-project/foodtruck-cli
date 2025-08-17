@@ -9,9 +9,15 @@ import sys
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
+import pytest
+
+# Mark all unit tests
+pytestmark = pytest.mark.unit
+
 # Import the installer functions
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from install import (
+
+from install import (  # noqa: E402
     check_uv_installed,
     create_wrapper_script,
     detect_shell,
