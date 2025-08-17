@@ -1,301 +1,208 @@
 """
-Completion command for generating shell completion scripts.
+Food Truck CLI - Completion Command
+Uses carapace-bin to provide shell completions
 """
 
+import os
+import platform
 import sys
 from pathlib import Path
 
-from ..console import print_error, print_info, print_success, print_title
+from ..console import print_error, print_success, print_warning
 
 
-def generate_bash_completion() -> str:
-    """Generate bash completion script."""
-    return """# bash completion for foodtruck
+def get_carapace_path() -> Path | None:
+    """Get the path to the carapace executable"""
+    # Try to find carapace in the project directory first
+    project_dir = Path(__file__).parent.parent.parent
 
-_foodtruck_completion() {
-    local cur prev opts cmds
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    
-    # Main commands
-    cmds="check setup completion --help --version"
-    
-    # Command-specific completions
-    case "${prev}" in
-        setup)
-            # Setup command options
-            opts="--api-repo --website-repo --target-dir --skip-api --skip-website --help"
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        check)
-            # Check command has no additional options
-            COMPREPLY=( $(compgen -W "--help" -- "${cur}") )
-            return 0
-            ;;
-        completion)
-            # Completion command options
-            opts="bash zsh powershell --help"
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        --api-repo|--website-repo|--target-dir)
-            # These options expect file/directory completion
-            return 0
-            ;;
-        --skip-api|--skip-website)
-            # Boolean flags
-            COMPREPLY=( $(compgen -W "true false" -- "${cur}") )
-            return 0
-            ;;
-        *)
-            # Default completion for main commands
-            COMPREPLY=( $(compgen -W "${cmds}" -- "${cur}") )
-            return 0
-            ;;
-    esac
-}
+        # Use correct executable name for platform
+    carapace_name = "carapace.exe" if platform.system() == "Windows" else "carapace"
+    carapace_path = project_dir / "carapace-bin" / carapace_name
 
-complete -F _foodtruck_completion foodtruck
-"""
+    if carapace_path.exists() and carapace_path.is_file():
+        return carapace_path
+
+    # Try to find carapace in PATH
+    import shutil
+    carapace_in_path = shutil.which(carapace_name)
+    if carapace_in_path:
+        return Path(carapace_in_path)
+
+    return None
 
 
-def generate_zsh_completion() -> str:
-    """Generate zsh completion script."""
-    return """# zsh completion for foodtruck
-
-_foodtruck() {
-    local curcontext="$curcontext" state line
-    typeset -A opt_args
-
-    _arguments -C \\
-        '1: :->cmds' \\
-        '*:: :->args'
-
-    case $state in
-        cmds)
-            local commands
-            commands=(
-                'check:Check dependencies'
-                'setup:Setup development environment'
-                'completion:Generate shell completion'
-                '--help:Show help'
-                '--version:Show version'
-            )
-            _describe -t commands 'foodtruck commands' commands
-            ;;
-        args)
-            case $line[1] in
-                setup)
-                    _arguments \\
-                        '--api-repo[API repository URL]:url:_urls' \\
-                        '--website-repo[Website repository URL]:url:_urls' \\
-                        '--target-dir[Target directory]:directory:_files -/' \\
-                        '--skip-api[Skip API setup]' \\
-                        '--skip-website[Skip website setup]' \\
-                        '--help[Show help]'
-                    ;;
-                check)
-                    _arguments \\
-                        '--help[Show help]'
-                    ;;
-                completion)
-                    _arguments \\
-                        'bash[Generate bash completion]' \\
-                        'zsh[Generate zsh completion]' \\
-                        'powershell[Generate PowerShell completion]' \\
-                        '--help[Show help]'
-                    ;;
-            esac
-            ;;
-    esac
-}
-
-compdef _foodtruck foodtruck
-"""
+def get_spec_file_path() -> Path:
+    """Get the path to the carapace spec file"""
+    return Path(__file__).parent / "complete.yaml"
 
 
-def generate_powershell_completion() -> str:
-    """Generate PowerShell completion script."""
-    return """# PowerShell completion for foodtruck
+def save_carapace_spec(spec_dir: Path) -> Path:
+    """Save the carapace spec to the appropriate directory"""
+    spec_dir.mkdir(parents=True, exist_ok=True)
+    spec_path = spec_dir / "foodtruck.yaml"
 
-Register-ArgumentCompleter -Native -CommandName foodtruck -ScriptBlock {
-    param($wordToComplete, $commandAst, $cursorPosition)
-    
-    $completions = @(
-        @{Command = "check"; Description = "Check dependencies"}
-        @{Command = "setup"; Description = "Setup development environment"}
-        @{Command = "completion"; Description = "Generate shell completion"}
-        @{Command = "--help"; Description = "Show help"}
-        @{Command = "--version"; Description = "Show version"}
-    )
-    
-    $setupOptions = @(
-        @{Option = "--api-repo"; Description = "API repository URL"}
-        @{Option = "--website-repo"; Description = "Website repository URL"}
-        @{Option = "--target-dir"; Description = "Target directory"}
-        @{Option = "--skip-api"; Description = "Skip API setup"}
-        @{Option = "--skip-website"; Description = "Skip website setup"}
-        @{Option = "--help"; Description = "Show help"}
-    )
-    
-    $completionOptions = @(
-        @{Option = "bash"; Description = "Generate bash completion"}
-        @{Option = "zsh"; Description = "Generate zsh completion"}
-        @{Option = "powershell"; Description = "Generate PowerShell completion"}
-        @{Option = "--help"; Description = "Show help"}
-    )
-    
-    # Get the command being completed
-    $command = $commandAst.CommandElements | Where-Object { $_.ToString() -ne "foodtruck" } | Select-Object -First 1
-    
-    if ($command) {
-        switch ($command.ToString()) {
-            "setup" {
-                $setupOptions | Where-Object { $_.Option -like "$wordToComplete*" } | ForEach-Object {
-                    [System.Management.Automation.CompletionResult]::new($_.Option, $_.Option, 'ParameterName', $_.Description)
-                }
-            }
-            "check" {
-                if ("--help" -like "$wordToComplete*") {
-                    [System.Management.Automation.CompletionResult]::new("--help", "--help", 'ParameterName', "Show help")
-                }
-            }
-            "completion" {
-                $completionOptions | Where-Object { $_.Option -like "$wordToComplete*" } | ForEach-Object {
-                    [System.Management.Automation.CompletionResult]::new($_.Option, $_.Option, 'ParameterName', $_.Description)
-                }
-            }
-        }
-    } else {
-        # Main command completion
-        $completions | Where-Object { $_.Command -like "$wordToComplete*" } | ForEach-Object {
-            [System.Management.Automation.CompletionResult]::new($_.Command, $_.Command, 'ParameterName', $_.Description)
-        }
-    }
-}
-"""
+    # Read the spec from the local YAML file
+    source_spec = get_spec_file_path()
+    if not source_spec.exists():
+        msg = f"Spec file not found: {source_spec}"
+        raise FileNotFoundError(msg)
+
+    # Copy the spec file to the carapace config directory
+    import shutil
+    shutil.copy2(source_spec, spec_path)
+
+    return spec_path
 
 
-def get_completion_script(shell: str) -> str:
-    """Get completion script for the specified shell."""
-    if shell == "bash":
-        return generate_bash_completion()
-    if shell == "zsh":
-        return generate_zsh_completion()
-    if shell == "powershell":
-        return generate_powershell_completion()
-    raise ValueError(f"Unsupported shell: {shell}")
+def get_shell_setup_commands(shell: str, carapace_path: Path) -> str:
+    """Get the proper setup commands for each shell based on official documentation"""
+    carapace_dir = carapace_path.parent
 
-
-def get_completion_file_path(shell: str) -> Path:
-    """Get the default completion file path for the shell."""
-    home = Path.home()
+    # Convert path to appropriate format for the shell
+    if platform.system() == "Windows":
+        carapace_dir_str = str(carapace_dir).replace("/", "\\")
+        carapace_path_str = str(carapace_path).replace("/", "\\")
+    else:
+        carapace_dir_str = str(carapace_dir)
+        carapace_path_str = str(carapace_path)
 
     if shell == "bash":
-        return home / ".local/share/bash-completion/completions/foodtruck"
+        return f"""# Add carapace to PATH
+export PATH="{carapace_dir_str}:$PATH"
+
+# Load all carapace completions
+source <({carapace_path_str} _carapace)"""
+
     if shell == "zsh":
-        return home / ".zsh/completion/_foodtruck"
+        return f"""# Add carapace to PATH
+export PATH="{carapace_dir_str}:$PATH"
+
+# Optional: Configure bridges
+export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
+
+# Optional: Configure completion style
+zstyle ':completion:*' format $'\\e[2;37mCompleting %d\\e[m'
+
+# Load all carapace completions
+source <({carapace_path_str} _carapace)"""
+
+    if shell == "fish":
+        return f"""# Add carapace to PATH
+set -Ux PATH "{carapace_dir_str}" $PATH
+
+# Optional: Configure bridges
+set -Ux CARAPACE_BRIDGES 'zsh,fish,bash,inshellisense'
+
+# Load all carapace completions
+{carapace_path_str} _carapace | source"""
+
     if shell == "powershell":
-        # PowerShell profile location
-        return home / "Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1"
-    raise ValueError(f"Unsupported shell: {shell}")
+        return f"""# Add carapace to PATH
+$env:PATH = "{carapace_dir_str};" + $env:PATH
+
+# Optional: Configure bridges
+$env:CARAPACE_BRIDGES = 'zsh,fish,bash,inshellisense'
+
+# Configure PowerShell completion
+Set-PSReadLineOption -Colors @{{ "Selection" = "`e[7m" }}
+Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
+
+# Load all carapace completions
+{carapace_path_str} _carapace | Out-String | Invoke-Expression"""
+
+    if shell == "cmd":
+        return f"""# Add carapace to PATH
+set PATH={carapace_dir_str};%PATH%
+
+# Note: CMD completion is limited. Consider using PowerShell for better completion support."""
+
+    msg = f"Unsupported shell: {shell}"
+    raise ValueError(msg)
 
 
-def install_completion(shell: str, output_path: Path | None = None) -> bool:
-    """Install completion script for the specified shell."""
-    try:
-        script = get_completion_script(shell)
-
-        if output_path is None:
-            output_path = get_completion_file_path(shell)
-
-        # Create parent directories if they don't exist
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Write the completion script
-        with output_path.open("w", encoding="utf-8") as f:
-            f.write(script)
-
-        # Make executable on Unix systems
-        if shell in ["bash", "zsh"]:
-            output_path.chmod(0o644)
-
-        return True
-    except Exception as e:
-        print_error(f"Failed to install {shell} completion: {e}")
-        return False
+def get_carapace_config_dir() -> Path:
+    """Get the appropriate carapace config directory for the platform"""
+    if platform.system() == "Windows":
+        # Windows: Use APPDATA directory
+        appdata = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+        return appdata / "carapace" / "specs"
+    # Unix-like: Use .config directory
+    return Path.home() / ".config" / "carapace" / "specs"
 
 
 def completion_command(
-    shell: str | None = None,
-    install: bool = False,
-    output: str | None = None,
+    shell: str = "",
+    output: Path | None = None,
+    install: bool = False
 ) -> None:
-    """
-    Generate shell completion scripts for foodtruck CLI.
+    """Generate shell completion scripts using carapace-bin"""
 
-    Args:
-        shell: Target shell (bash, zsh, powershell). If not specified, shows all.
-        install: Install the completion script automatically.
-        output: Output file path (optional).
-    """
-    print_title("🐚 Shell Completion Generator")
+    # Auto-detect shell if not specified
+    if not shell:
+        if platform.system() == "Windows":
+            # Check for PowerShell first, then CMD
+            if "powershell" in os.environ.get("SHELL", "").lower():
+                shell = "powershell"
+            else:
+                shell = "cmd"
+        else:
+            # Unix-like systems
+            shell = os.environ.get("SHELL", "bash")
+            if "zsh" in shell:
+                shell = "zsh"
+            elif "fish" in shell:
+                shell = "fish"
+            else:
+                shell = "bash"
 
-    supported_shells = ["bash", "zsh", "powershell"]
-
-    if shell and shell not in supported_shells:
+    # Validate shell type
+    supported_shells = ["bash", "zsh", "fish", "powershell", "cmd"]
+    if shell not in supported_shells:
         print_error(f"Unsupported shell: {shell}")
-        print_info(f"Supported shells: {', '.join(supported_shells)}")
+        print_error(f"Supported shells: {', '.join(supported_shells)}")
         sys.exit(1)
 
-    shells_to_process = [shell] if shell else supported_shells
+    # Get carapace path
+    carapace_path = get_carapace_path()
+    if not carapace_path:
+        print_error("Carapace-bin not found. Please run the installation script first: python install.py")
+        sys.exit(1)
 
-    for current_shell in shells_to_process:
-        print_info(f"\n📝 Generating {current_shell} completion...")
+    try:
+        if install:
+            print_success(f"Installing carapace completion for {shell}...")
 
-        try:
-            script = get_completion_script(current_shell)
+            # Create spec in user's carapace config directory
+            config_dir = get_carapace_config_dir()
+            spec_path = save_carapace_spec(config_dir)
+            print_success(f"Carapace spec saved to: {spec_path}")
 
-            if install:
-                output_path = (
-                    Path(output) if output else get_completion_file_path(current_shell)
-                )
-                if install_completion(current_shell, output_path):
-                    print_success(
-                        f"✅ {current_shell} completion installed to: {output_path}"
-                    )
+        # Get the proper setup commands for the shell
+        setup_commands = get_shell_setup_commands(shell, carapace_path)
 
-                    if current_shell in ["bash", "zsh"]:
-                        print_info(
-                            "💡 To enable completion, restart your shell or run:"
-                        )
-                        if current_shell == "bash":
-                            print_info(f"   source {output_path}")
-                        else:  # zsh
-                            print_info("   source ~/.zshrc")
-                            print_info("   # or manually: autoload -U compinit && compinit")
-                else:
-                    print_error(f"❌ Failed to install {current_shell} completion")
+        print_success(f"To enable completion for {shell}, add this to your shell configuration:")
+        print_warning(setup_commands)
+
+        if install:
+            print_success("Completion installation completed!")
+            if platform.system() == "Windows":
+                print_warning("You may need to restart your terminal or reload your shell configuration.")
+                if shell == "cmd":
+                    print_warning("Note: CMD completion is limited. Consider using PowerShell for better completion support.")
             else:
-                # Just print the script
-                print_info(f"📄 {current_shell} completion script:")
-                print("─" * 50)
-                print(script)
-                print("─" * 50)
+                print_warning("You may need to restart your terminal or reload your shell configuration.")
 
-                if not output:
-                    default_path = get_completion_file_path(current_shell)
-                    print_info(f"💡 To install, save to: {default_path}")
+        if output:
+            # Save the setup commands to a file
+            output.parent.mkdir(parents=True, exist_ok=True)
+            with output.open("w", encoding="utf-8") as f:
+                f.write(f"# Food Truck CLI completion for {shell}\n")
+                f.write("# Generated by carapace-bin\n\n")
+                f.write(setup_commands)
+                f.write("\n")
+            print_success(f"Setup commands saved to: {output}")
 
-        except Exception as e:
-            print_error(f"❌ Failed to generate {current_shell} completion: {e}")
-
-    if install:
-        print_info("\n🎉 Completion installation complete!")
-        print_info("💡 Restart your shell or reload your profile to enable completion.")
-    else:
-        print_info(
-            "\n💡 To install completion scripts, use: foodtruck completion --install"
-        )
+    except Exception as e:
+        print_error(f"Error: {e}")
+        sys.exit(1)
