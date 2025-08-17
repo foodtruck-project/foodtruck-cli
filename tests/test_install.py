@@ -11,7 +11,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from install import check_uv_installed, detect_shell, get_script_dir
+from install import (
+    check_uv_installed,
+    create_wrapper_script,
+    detect_shell,
+    get_script_dir,
+)
 
 
 def test_get_script_dir():
@@ -70,3 +75,19 @@ def test_install_script_exists():
     install_script = Path(__file__).parent.parent / "install.py"
     assert install_script.exists()
     assert install_script.is_file()
+
+
+def test_create_wrapper_script_already_exists():
+    """Test creating wrapper script when it already exists"""
+    with patch("pathlib.Path.exists", return_value=True), \
+         patch("install.colored_print") as mock_print:
+        
+        script_dir = Path("/tmp/test")
+        create_wrapper_script(script_dir)
+        
+        # Should show warning that script already exists
+        mock_print.assert_called()
+        # Check that the warning message was called
+        calls = mock_print.call_args_list
+        warning_calls = [call for call in calls if "Script wrapper já existe" in str(call)]
+        assert len(warning_calls) > 0

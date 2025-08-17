@@ -55,14 +55,26 @@ cd "$(dirname "$0")"
 uv run foodtruck "$@"
 """
 
-    with wrapper_script.open("w", encoding="utf-8") as f:
-        f.write(wrapper_content)
+    # Check if wrapper script already exists
+    if wrapper_script.exists():
+        colored_print(f"⚠️  Script wrapper já existe: {wrapper_script}", Colors.YELLOW)
+        return
 
-    # Make executable on Unix systems
-    if platform.system() != "Windows":
-        wrapper_script.chmod(0o755)
+    try:
+        with wrapper_script.open("w", encoding="utf-8") as f:
+            f.write(wrapper_content)
 
-    colored_print("✅ Script wrapper criado", Colors.GREEN)
+        # Make executable on Unix systems
+        if platform.system() != "Windows":
+            wrapper_script.chmod(0o755)
+
+        colored_print("✅ Script wrapper criado", Colors.GREEN)
+    except PermissionError:
+        colored_print(f"❌ Erro de permissão ao criar script: {wrapper_script}", Colors.RED)
+        sys.exit(1)
+    except Exception as e:
+        colored_print(f"❌ Erro ao criar script wrapper: {e}", Colors.RED)
+        sys.exit(1)
 
 
 def detect_shell() -> tuple[str | None, Path | None]:

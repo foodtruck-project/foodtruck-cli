@@ -122,6 +122,12 @@ def setup_command(
 
     # Create foodtruck directory inside target directory
     foodtruck_path = target_path / "foodtruck"
+    
+    # Check if foodtruck_path exists and is a file (wrapper script)
+    if foodtruck_path.exists() and foodtruck_path.is_file():
+        print(f"⚠️  {foodtruck_path} is a file (wrapper script). Using different directory name.")
+        foodtruck_path = target_path / "foodtruck-projects"
+    
     foodtruck_path.mkdir(parents=True, exist_ok=True)
 
     # Check if foodtruck directory already has content

@@ -37,3 +37,16 @@ def test_cli_help(cli_command, project_root):
 
     assert result.returncode == 0, f"CLI help failed with return code {result.returncode}"
     assert "Food Truck Development CLI" in result.stdout, "Expected CLI help not found"
+
+
+def test_setup_command_help(cli_command, project_root):
+    """Test that the setup command shows help information"""
+    result = subprocess.run(
+        [*cli_command, "setup", "--help"],
+        capture_output=True,
+        text=True,
+        cwd=project_root
+    )
+
+    assert result.returncode == 0, f"Setup help failed with return code {result.returncode}"
+    assert "setup" in result.stdout, "Expected setup help not found"
