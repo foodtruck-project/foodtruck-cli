@@ -14,7 +14,7 @@ import pytest
 # Mark all unit tests
 pytestmark = pytest.mark.unit
 
-# Import the installer functions
+# Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from install import (  # noqa: E402
@@ -23,6 +23,11 @@ from install import (  # noqa: E402
     detect_shell,
     install_package,
 )
+
+# Import the installer functions
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
 
 
 def test_windows_shell_detection():
