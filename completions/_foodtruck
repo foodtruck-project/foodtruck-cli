@@ -1,0 +1,50 @@
+# zsh completion for foodtruck
+
+_foodtruck() {
+    local curcontext="$curcontext" state line
+    typeset -A opt_args
+
+    _arguments -C \
+        '1: :->cmds' \
+        '*:: :->args'
+
+    case $state in
+        cmds)
+            local commands
+            commands=(
+                'check:Check dependencies'
+                'setup:Setup development environment'
+                'completion:Generate shell completion'
+                '--help:Show help'
+                '--version:Show version'
+            )
+            _describe -t commands 'foodtruck commands' commands
+            ;;
+        args)
+            case $line[1] in
+                setup)
+                    _arguments \
+                        '--api-repo[API repository URL]:url:_urls' \
+                        '--website-repo[Website repository URL]:url:_urls' \
+                        '--target-dir[Target directory]:directory:_files -/' \
+                        '--skip-api[Skip API setup]' \
+                        '--skip-website[Skip website setup]' \
+                        '--help[Show help]'
+                    ;;
+                check)
+                    _arguments \
+                        '--help[Show help]'
+                    ;;
+                completion)
+                    _arguments \
+                        'bash[Generate bash completion]' \
+                        'zsh[Generate zsh completion]' \
+                        'powershell[Generate PowerShell completion]' \
+                        '--help[Show help]'
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+compdef _foodtruck foodtruck
