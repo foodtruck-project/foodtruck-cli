@@ -34,19 +34,19 @@ python3 install.py
 
 #### Zsh
 
-1. Create the completions directory:
+1. Create the completion directory:
    ```bash
-   mkdir -p ~/.zsh/completions
+   mkdir -p ~/.zsh/completion
    ```
 
 2. Copy the completion script:
    ```bash
-   cp completions/_foodtruck ~/.zsh/completions/
+   cp completions/_foodtruck ~/.zsh/completion/
    ```
 
 3. Add to your `.zshrc`:
    ```bash
-   echo "fpath=(~/.zsh/completions $fpath)" >> ~/.zshrc
+   echo "fpath=(~/.zsh/completion \$fpath)" >> ~/.zshrc
    echo "autoload -U compinit && compinit" >> ~/.zshrc
    ```
 
