@@ -21,7 +21,7 @@ def test_cli_runs(cli_command, project_root):
 
 def test_main_function():
     """Test the main function directly"""
-    from foodtruck_cli.main import main, app
+    from foodtruck_cli.main import app
     # Call with empty args to avoid Cyclopts warning
     app([])
 
