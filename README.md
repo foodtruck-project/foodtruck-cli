@@ -56,6 +56,8 @@ foodtruck setup
 foodtruck completion
 ```
 
+
+
 ### Shell Completion:
 ```bash
 # Gerar scripts de completion para todos os shells
@@ -64,6 +66,7 @@ foodtruck completion
 # Instalar completion para um shell específico
 foodtruck completion bash --install
 foodtruck completion zsh --install
+foodtruck completion fish --install
 foodtruck completion powershell --install
 
 # Gerar e salvar em arquivo específico
@@ -93,13 +96,9 @@ foodtruck-cli/
 │   └── commands/          # Comandos do CLI
 │       ├── __init__.py    # Inicialização dos comandos
 │       ├── check.py       # Comando de verificação
+│       ├── completion.py  # Comando de completion
 │       ├── setup.py       # Comando de configuração
-│       └── completion.py  # Comando de completion
-├── completions/           # Scripts de completion
-│   ├── foodtruck.bash    # Completion para Bash
-│   ├── _foodtruck        # Completion para Zsh
-│   ├── foodtruck.ps1     # Completion para PowerShell
-│   └── README.md         # Documentação dos completions
+│       └── foodtruck.yaml # Especificação do carapace para completion
 ├── pyproject.toml        # Configuração do projeto
 ├── install.py            # Script de instalação Python (cross-platform)
 └── README.md            # Este arquivo
@@ -125,8 +124,9 @@ foodtruck-cli/
 - ✅ Criação automática de diretórios
 - ✅ Mensagens de erro mais detalhadas
 - ✅ Código mais modular e testável
-- ✅ Instalação automática de shell completion
+
 - ✅ Suporte a Bash, Zsh e PowerShell
+- ✅ Auto-completion com carapace-bin
 
 ## 🔧 Configuração de Qualidade
 
