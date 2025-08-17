@@ -104,7 +104,12 @@ def detect_shell() -> tuple[str | None, Path | None]:
         return "bash", home / ".bashrc"
     if platform.system() == "Windows":
         # On Windows, we'll use PowerShell profile
-        powershell_profile = home / "Documents" / "WindowsPowerShell" / "Microsoft.PowerShell_profile.ps1"
+        powershell_profile = (
+            home
+            / "Documents"
+            / "WindowsPowerShell"
+            / "Microsoft.PowerShell_profile.ps1"
+        )
         return "powershell", powershell_profile
     return None, None
 
@@ -149,7 +154,7 @@ def install_package() -> None:
             ["uv", "pip", "install", "-e", "."],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
         print_success("Pacote instalado com sucesso")
     except subprocess.CalledProcessError as e:
@@ -158,6 +163,62 @@ def install_package() -> None:
     except FileNotFoundError:
         print_error("UV não encontrado no PATH")
         sys.exit(1)
+
+
+def install_completion_scripts(shell_name: str, shell_config: Path) -> None:
+    """Install completion scripts for the detected shell"""
+    try:
+        # Import the completion command after package installation
+        from foodtruck_cli.commands.completion import (
+            get_completion_file_path,
+            install_completion,
+        )
+
+        print_step("Instalando scripts de completion...")
+
+        if shell_name in ["bash", "zsh"]:
+            # Install completion script
+            completion_path = get_completion_file_path(shell_name)
+            if install_completion(shell_name, completion_path):
+                print_success(
+                    f"Completion {shell_name} instalado em: {completion_path}"
+                )
+
+                # Add completion source to shell config if not already present
+                with shell_config.open("r", encoding="utf-8") as f:
+                    content = f.read()
+
+                completion_source = ""
+                if shell_name == "bash":
+                    completion_source = f"source {completion_path}"
+                elif shell_name == "zsh":
+                    completion_source = "autoload -U compinit && compinit"
+
+                if completion_source and completion_source not in content:
+                    with shell_config.open("a", encoding="utf-8") as f:
+                        f.write(f"\n# Food Truck CLI Completion\n{completion_source}\n")
+                    print_success(f"Completion configurado em {shell_config}")
+                else:
+                    print_warning(f"Completion já configurado em {shell_config}")
+            else:
+                print_warning(f"Falha ao instalar completion {shell_name}")
+
+        elif shell_name == "powershell":
+            # For PowerShell, we'll add the completion script to the profile
+            completion_script = Path(__file__).parent / "completions" / "foodtruck.ps1"
+            if completion_script.exists():
+                with shell_config.open("a", encoding="utf-8") as f:
+                    f.write(f"\n# Food Truck CLI Completion\n. '{completion_script}'\n")
+                print_success(f"Completion PowerShell configurado em {shell_config}")
+            else:
+                print_warning("Script de completion PowerShell não encontrado")
+
+    except ImportError:
+        print_warning(
+            "Não foi possível instalar completion scripts (pacote não instalado)"
+        )
+    except Exception as e:
+        print_warning(f"Erro ao instalar completion: {e}")
 
 
 def main():
@@ -184,7 +245,9 @@ def main():
         print_step(f"Configurando {shell_name}...")
         add_to_path(script_dir, shell_config, shell_name)
     else:
-        print_warning("Shell não detectado. Adicione manualmente ao seu arquivo de configuração:")
+        print_warning(
+            "Shell não detectado. Adicione manualmente ao seu arquivo de configuração:"
+        )
         if platform.system() == "Windows":
             print(f'$env:PATH = "{script_dir};" + $env:PATH')
         else:
@@ -193,6 +256,10 @@ def main():
     # Install the package
     print_step("Instalando pacote...")
     install_package()
+
+    # Install completion scripts
+    if shell_name and shell_config:
+        install_completion_scripts(shell_name, shell_config)
 
     # Success message
     print_success("Instalação concluída!")
