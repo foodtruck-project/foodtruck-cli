@@ -44,6 +44,32 @@ uv run foodtruck
 foodtruck
 ```
 
+### Comandos Disponíveis:
+```bash
+# Verificar dependências
+foodtruck check
+
+# Configurar ambiente de desenvolvimento
+foodtruck setup
+
+# Gerar scripts de completion
+foodtruck completion
+```
+
+### Shell Completion:
+```bash
+# Gerar scripts de completion para todos os shells
+foodtruck completion
+
+# Instalar completion para um shell específico
+foodtruck completion bash --install
+foodtruck completion zsh --install
+foodtruck completion powershell --install
+
+# Gerar e salvar em arquivo específico
+foodtruck completion bash --output ~/.local/share/bash-completion/completions/foodtruck
+```
+
 ### Qualidade de Código:
 ```bash
 # Verificar código
@@ -60,12 +86,23 @@ uv run task test
 
 ```
 foodtruck-cli/
-├── foodtruck_cli/       # Pacote principal
-│   ├── __init__.py     # Inicialização do pacote
-│   └── main.py        # Ponto de entrada CLI
-├── pyproject.toml     # Configuração do projeto
-├── install.py         # Script de instalação Python (cross-platform)
-└── README.md         # Este arquivo
+├── foodtruck_cli/           # Pacote principal
+│   ├── __init__.py         # Inicialização do pacote
+│   ├── main.py            # Ponto de entrada CLI
+│   ├── console.py         # Utilitários de console
+│   └── commands/          # Comandos do CLI
+│       ├── __init__.py    # Inicialização dos comandos
+│       ├── check.py       # Comando de verificação
+│       ├── setup.py       # Comando de configuração
+│       └── completion.py  # Comando de completion
+├── completions/           # Scripts de completion
+│   ├── foodtruck.bash    # Completion para Bash
+│   ├── _foodtruck        # Completion para Zsh
+│   ├── foodtruck.ps1     # Completion para PowerShell
+│   └── README.md         # Documentação dos completions
+├── pyproject.toml        # Configuração do projeto
+├── install.py            # Script de instalação Python (cross-platform)
+└── README.md            # Este arquivo
 ```
 
 ## 🔧 Script de Instalação
@@ -88,6 +125,8 @@ foodtruck-cli/
 - ✅ Criação automática de diretórios
 - ✅ Mensagens de erro mais detalhadas
 - ✅ Código mais modular e testável
+- ✅ Instalação automática de shell completion
+- ✅ Suporte a Bash, Zsh e PowerShell
 
 ## 🔧 Configuração de Qualidade
 
