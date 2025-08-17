@@ -196,7 +196,7 @@ def get_completion_file_path(shell: str) -> Path:
     if shell == "bash":
         return home / ".local/share/bash-completion/completions/foodtruck"
     if shell == "zsh":
-        return home / ".zsh/completions/_foodtruck"
+        return home / ".zsh/completion/_foodtruck"
     if shell == "powershell":
         # PowerShell profile location
         return home / "Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1"
@@ -274,7 +274,8 @@ def completion_command(
                         if current_shell == "bash":
                             print_info(f"   source {output_path}")
                         else:  # zsh
-                            print_info("   autoload -U compinit && compinit")
+                            print_info("   source ~/.zshrc")
+                            print_info("   # or manually: autoload -U compinit && compinit")
                 else:
                     print_error(f"❌ Failed to install {current_shell} completion")
             else:
