@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://carapace.sh/schemas/command.json
+name: foodtruck
+description: Food Truck Development CLI
+flags:
+  --help: Display this message and exit
+  --version: Display application version
+commands:
+- name: check
+  description: Check command implementation
+- name: setup
+  description: Setup the complete Food Truck development environment
+  flags:
+    --api-repo: API repository URL
+    --website-repo: Website repository URL
+    --target-dir: Target directory to clone repositories
+    --skip-api: Skip API repository setup
+    --skip-website: Skip website repository setup
+  completion:
+    flag:
+      api-repo: ["https://github.com/foodtruck-project/foodtruck-api.git", "https://github.com/custom/foodtruck-api.git", "https://github.com/company/api-repo.git"]
+      website-repo: ["https://github.com/foodtruck-project/foodtruck-website.git", "https://github.com/custom/foodtruck-website.git", "https://github.com/company/website-repo.git"]
+      target-dir: ["$directories", ".", "./projects", "~/projects"]
+- name: completion
+  description: Generate shell completion scripts using carapace-bin
+  flags:
+    --shell: Shell type (bash, zsh, fish, powershell)
+    --output: Output file path for the completion script
+    --install: Install the completion script to the appropriate location
+  completion:
+    flag:
+      shell: ["bash", "zsh", "fish", "powershell"]
+      output: ["$files", "./completion.sh", "~/.bash_completion"]
