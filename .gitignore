@@ -213,3 +213,4 @@ foodtruck-api/
 foodtruck-website/
 # Mock Windows paths from testing
 C:/
+carapace-bin/
