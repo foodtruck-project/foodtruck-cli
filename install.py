@@ -21,8 +21,38 @@ class Colors:
     NC = "\033[0m"  # No Color
 
 
+def print_success(text: str) -> None:
+    """Print success message"""
+    print(f"{Colors.GREEN}✅ {text}{Colors.NC}")
+
+
+def print_error(text: str) -> None:
+    """Print error message"""
+    print(f"{Colors.RED}❌ {text}{Colors.NC}")
+
+
+def print_warning(text: str) -> None:
+    """Print warning message"""
+    print(f"{Colors.YELLOW}⚠️  {text}{Colors.NC}")
+
+
+def print_info(text: str) -> None:
+    """Print info message"""
+    print(f"{Colors.BLUE}ℹ️  {text}{Colors.NC}")
+
+
+def print_step(text: str) -> None:
+    """Print step message"""
+    print(f"{Colors.BLUE}🔧 {text}{Colors.NC}")
+
+
+def print_title(text: str) -> None:
+    """Print title message"""
+    print(f"{Colors.BLUE}🚚 {text}{Colors.NC}")
+
+
 def colored_print(text: str, color: str) -> None:
-    """Print colored text to terminal"""
+    """Print colored text to terminal (legacy function)"""
     print(f"{color}{text}{Colors.NC}")
 
 
@@ -57,7 +87,7 @@ uv run foodtruck "$@"
 
     # Check if wrapper script already exists
     if wrapper_script.exists():
-        colored_print(f"⚠️  Script wrapper já existe: {wrapper_script}", Colors.YELLOW)
+        print_warning(f"Script wrapper já existe: {wrapper_script}")
         return
 
     try:
@@ -68,12 +98,12 @@ uv run foodtruck "$@"
         if platform.system() != "Windows":
             wrapper_script.chmod(0o755)
 
-        colored_print("✅ Script wrapper criado", Colors.GREEN)
+        print_success("Script wrapper criado")
     except PermissionError:
-        colored_print(f"❌ Erro de permissão ao criar script: {wrapper_script}", Colors.RED)
+        print_error(f"Erro de permissão ao criar script: {wrapper_script}")
         sys.exit(1)
     except Exception as e:
-        colored_print(f"❌ Erro ao criar script wrapper: {e}", Colors.RED)
+        print_error(f"Erro ao criar script wrapper: {e}")
         sys.exit(1)
 
 
@@ -112,7 +142,7 @@ def add_to_path(script_dir: Path, shell_config: Path, shell_name: str) -> None:
     # Check if already configured
     path_entry = str(script_dir)
     if path_entry in content:
-        colored_print(f"⚠️  PATH já configurado em {shell_config}", Colors.YELLOW)
+        print_warning(f"PATH já configurado em {shell_config}")
         return
 
     # Add to configuration
@@ -123,7 +153,7 @@ def add_to_path(script_dir: Path, shell_config: Path, shell_name: str) -> None:
         else:
             f.write(f'export PATH="{script_dir}:$PATH"\n')
 
-    colored_print(f"✅ Adicionado ao {shell_config}", Colors.GREEN)
+    print_success(f"Adicionado ao {shell_config}")
 
 
 def install_package() -> None:
@@ -135,27 +165,26 @@ def install_package() -> None:
             text=True,
             check=True
         )
-        colored_print("✅ Pacote instalado com sucesso", Colors.GREEN)
+        print_success("Pacote instalado com sucesso")
     except subprocess.CalledProcessError as e:
-        colored_print(f"❌ Erro ao instalar pacote: {e}", Colors.RED)
+        print_error(f"Erro ao instalar pacote: {e}")
         sys.exit(1)
     except FileNotFoundError:
-        colored_print("❌ UV não encontrado no PATH", Colors.RED)
+        print_error("UV não encontrado no PATH")
         sys.exit(1)
 
 
 def main():
     """Main installation function"""
-    colored_print("🚚 Configurando Food Truck CLI...", Colors.BLUE)
+    print_title("Configurando Food Truck CLI...")
 
     # Get script directory
     script_dir = get_script_dir()
 
     # Check if UV is installed
     if not check_uv_installed():
-        colored_print(
-            "❌ UV não está instalado. Instale em: https://docs.astral.sh/uv/getting-started/installation/",
-            Colors.RED
+        print_error(
+            "UV não está instalado. Instale em: https://docs.astral.sh/uv/getting-started/installation/"
         )
         sys.exit(1)
 
@@ -166,38 +195,38 @@ def main():
     shell_name, shell_config = detect_shell()
 
     if shell_name and shell_config:
-        colored_print(f"📝 Configurando {shell_name}...", Colors.BLUE)
+        print_step(f"Configurando {shell_name}...")
         add_to_path(script_dir, shell_config, shell_name)
     else:
-        colored_print("⚠️  Shell não detectado. Adicione manualmente ao seu arquivo de configuração:", Colors.YELLOW)
+        print_warning("Shell não detectado. Adicione manualmente ao seu arquivo de configuração:")
         if platform.system() == "Windows":
             print(f'$env:PATH = "{script_dir};" + $env:PATH')
         else:
             print(f'export PATH="{script_dir}:$PATH"')
 
     # Install the package
-    colored_print("📦 Instalando pacote...", Colors.BLUE)
+    print_step("Instalando pacote...")
     install_package()
 
     # Success message
-    colored_print("🎉 Instalação concluída!", Colors.GREEN)
+    print_success("Instalação concluída!")
 
     if shell_config:
-        colored_print("💡 Recarregue seu terminal ou execute:", Colors.YELLOW)
+        print_warning("💡 Recarregue seu terminal ou execute:")
         if platform.system() == "Windows" and shell_name == "powershell":
             print(f". {shell_config}")
         else:
             print(f"source {shell_config}")
 
     print()
-    colored_print("🚀 Use o CLI com:", Colors.GREEN)
+    print_success("🚀 Use o CLI com:")
     if platform.system() == "Windows":
         print("foodtruck.bat")
     else:
         print("foodtruck")
 
     print()
-    colored_print("🔧 Para desenvolvimento:", Colors.BLUE)
+    print_step("🔧 Para desenvolvimento:")
     print("uv run task cli")
 
 

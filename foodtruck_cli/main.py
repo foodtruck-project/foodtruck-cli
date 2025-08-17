@@ -5,9 +5,9 @@ Food Truck CLI - Main entry point
 import sys
 
 import cyclopts
-from rich.console import Console
 
 from .commands import setup_command
+from .console import print_error
 
 # Create cyclopts app
 app = cyclopts.App(
@@ -22,13 +22,11 @@ app.command(setup_command, name="setup")
 
 def main() -> None:
     """Main CLI entry point."""
-    console = Console()
-
     try:
         # Parse and execute commands
         app()
     except Exception as e:
-        console.print(f"[red]Error: {e}[/red]")
+        print_error(f"Error: {e}")
         sys.exit(1)
 
 

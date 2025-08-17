@@ -81,7 +81,7 @@ def test_create_wrapper_script_already_exists():
     """Test creating wrapper script when it already exists"""
     with (
         patch("pathlib.Path.exists", return_value=True),
-        patch("install.colored_print") as mock_print,
+        patch("install.print_warning") as mock_print,
     ):
         script_dir = Path("/tmp/test")
         create_wrapper_script(script_dir)

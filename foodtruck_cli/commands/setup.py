@@ -9,6 +9,22 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from ..console import (
+    print_clone,
+    print_command,
+    print_error,
+    print_info,
+    print_newline,
+    print_path,
+    print_separator,
+    print_skip,
+    print_step,
+    print_subtitle,
+    print_success,
+    print_title,
+    print_warning,
+)
+
 
 class SetupOptions(BaseModel):
     """Options for the setup command."""
@@ -36,9 +52,9 @@ def run_command(cmd: list[str], cwd: Path | None = None) -> bool:
         result = subprocess.run(
             cmd, cwd=cwd, capture_output=True, text=True, check=True
         )
-        print(f"✅ {result.stdout.strip()}")
+        print_success(result.stdout.strip())
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error running {' '.join(cmd)}: {e.stderr.strip()}")
+        print_error(f"Error running {' '.join(cmd)}: {e.stderr.strip()}")
         return False
     else:
         return True
@@ -46,10 +62,10 @@ def run_command(cmd: list[str], cwd: Path | None = None) -> bool:
 
 def clone_repository(repo_url: str, target_path: Path, repo_name: str) -> bool:
     """Clone a repository."""
-    print(f"🚀 Cloning {repo_name}...")
+    print_clone(f"Cloning {repo_name}...")
 
     if target_path.exists():
-        print(f"⚠️  Directory {target_path} already exists. Skipping clone.")
+        print_warning(f"Directory {target_path} already exists. Skipping clone.")
         return True
 
     return run_command(["git", "clone", repo_url, str(target_path)])
@@ -57,37 +73,37 @@ def clone_repository(repo_url: str, target_path: Path, repo_name: str) -> bool:
 
 def setup_api_project(api_path: Path) -> bool:
     """Setup the API project."""
-    print("🔧 Setting up API project...")
+    print_step("Setting up API project...")
 
     # Check if UV is available
     if not run_command(["uv", "--version"], cwd=api_path):
-        print("❌ UV is not available. Please install UV first.")
+        print_error("UV is not available. Please install UV first.")
         return False
 
     # Install dependencies
     if not run_command(["uv", "sync"], cwd=api_path):
-        print("❌ Failed to install API dependencies.")
+        print_error("Failed to install API dependencies.")
         return False
 
-    print("✅ API project setup completed!")
+    print_success("API project setup completed!")
     return True
 
 
 def setup_website_project(website_path: Path) -> bool:
     """Setup the website project."""
-    print("🔧 Setting up Website project...")
+    print_step("Setting up Website project...")
 
     # Check if it's a Node.js project
     package_json = website_path / "package.json"
     if package_json.exists():
         # Install npm dependencies
         if not run_command(["npm", "install"], cwd=website_path):
-            print("❌ Failed to install website dependencies.")
+            print_error("Failed to install website dependencies.")
             return False
     else:
-        print("i  No package.json found. Website might not need npm dependencies.")
+        print_info("No package.json found. Website might not need npm dependencies.")
 
-    print("✅ Website project setup completed!")
+    print_success("Website project setup completed!")
     return True
 
 
@@ -104,8 +120,8 @@ def setup_command(
     This command will clone both the API and website repositories
     and install their dependencies.
     """
-    print("🚚 Food Truck Development Environment Setup")
-    print("=" * 50)
+    print_title("Food Truck Development Environment Setup")
+    print_separator()
 
     # Parse options
     options = SetupOptions(
@@ -122,22 +138,24 @@ def setup_command(
 
     # Create foodtruck directory inside target directory
     foodtruck_path = target_path / "foodtruck"
-    
+
     # Check if foodtruck_path exists and is a file (wrapper script)
     if foodtruck_path.exists() and foodtruck_path.is_file():
-        print(f"⚠️  {foodtruck_path} is a file (wrapper script). Using different directory name.")
+        print_warning(
+            f"{foodtruck_path} is a file (wrapper script). Using different directory name."
+        )
         foodtruck_path = target_path / "foodtruck-projects"
-    
+
     foodtruck_path.mkdir(parents=True, exist_ok=True)
 
     # Check if foodtruck directory already has content
     if any(foodtruck_path.iterdir()):
-        print(
-            f"⚠️  Directory {foodtruck_path} already has content. Please clean it first or use a different target directory."
+        print_warning(
+            f"Directory {foodtruck_path} already has content. Please clean it first or use a different target directory."
         )
         sys.exit(1)
 
-    print(f"📁 Creating foodtruck directory: {foodtruck_path}")
+    print_info(f"Creating foodtruck directory: {foodtruck_path}")
 
     # Change to foodtruck directory for operations
     original_cwd = Path.cwd()
@@ -148,30 +166,36 @@ def setup_command(
     # Setup API
     if not options.skip_api:
         api_path = Path("foodtruck-api")
-        if not clone_repository(options.api_repo, api_path, "API") or not setup_api_project(api_path):
+        if not clone_repository(
+            options.api_repo, api_path, "API"
+        ) or not setup_api_project(api_path):
             success = False
     else:
-        print("⏭️  Skipping API setup")
+        print_skip("Skipping API setup")
 
     # Setup Website
     if not options.skip_website:
         website_path = Path("foodtruck-website")
-        if not clone_repository(options.website_repo, website_path, "Website") or not setup_website_project(website_path):
+        if not clone_repository(
+            options.website_repo, website_path, "Website"
+        ) or not setup_website_project(website_path):
             success = False
     else:
-        print("⏭️  Skipping Website setup")
+        print_skip("Skipping Website setup")
 
     # Restore original directory
     os.chdir(original_cwd)
 
     if success:
-        print("\n🎉 Setup completed successfully!")
-        print(f"\n📁 Projects created in: {foodtruck_path}")
-        print("\n📋 Next steps:")
-        print(
-            "  API: cd foodtruck/foodtruck-api && uv run python -m foodtruck_api.cli.app database init"
-        )
-        print("  Website: cd foodtruck/foodtruck-website && open index.html")
+        print_newline()
+        print_success("Setup completed successfully!")
+        print_newline()
+        print_info(f"Projects created in: {foodtruck_path}")
+        print_newline()
+        print_subtitle("Next steps:")
+        print_command("  API: cd foodtruck/foodtruck-api && uv run python -m foodtruck_api.cli.app database init")
+        print_command("  Website: cd foodtruck/foodtruck-website && open index.html")
     else:
-        print("\n💥 Setup failed. Please check the errors above.")
+        print_newline()
+        print_error("Setup failed. Please check the errors above.")
         sys.exit(1)
