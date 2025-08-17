@@ -22,7 +22,7 @@ build-backend = "hatchling.build"
 
 [tool.taskipy.tasks]
 # Initial setup - one command to rule them all
-init = "uv sync && uv pip install -e . && ./install.sh && echo '✅ Setup completo! Use: uv run foodtruck ou foodtruck'"
+init = "uv sync && uv pip install -e . && python3 install.py && echo '✅ Setup completo! Use: uv run foodtruck ou foodtruck'"
 # Lint code
 lint = "uv run ruff check ."
 # Type check

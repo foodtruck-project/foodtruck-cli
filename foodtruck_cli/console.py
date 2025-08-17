@@ -41,7 +41,7 @@ def print_warning(message: str) -> None:
 
 def print_info(message: str) -> None:
     """Print an info message."""
-    console.print(f"ℹ️  {message}", style="info")
+    console.print(f"i  {message}", style="info")
 
 
 def print_step(message: str) -> None:

@@ -8,12 +8,11 @@ Uma interface de linha de comando para gerenciamento de food trucks construída 
 - Python 3.13 ou superior
 - UV package manager
 
-### Scripts de Instalação
+### Script de Instalação
 
-O projeto oferece dois scripts de instalação:
+O projeto oferece um script de instalação cross-platform:
 
 - **`install.py`** - Script Python cross-platform (Windows, Linux, macOS)
-- **`install.sh`** - Script bash para Linux/macOS
 
 ### Instalação
 ```bash
@@ -32,9 +31,6 @@ uv sync
 
 # Usando o script Python (cross-platform)
 python3 install.py
-
-# Ou usando o script bash (Linux/macOS)
-./install.sh
 ```
 
 ## 📖 Como Usar
@@ -69,23 +65,22 @@ foodtruck-cli/
 │   └── main.py        # Ponto de entrada CLI
 ├── pyproject.toml     # Configuração do projeto
 ├── install.py         # Script de instalação Python (cross-platform)
-├── install.sh         # Script de instalação bash (Linux/macOS)
 └── README.md         # Este arquivo
 ```
 
-## 🔧 Scripts de Instalação
+## 🔧 Script de Instalação
 
-### Comparação entre `install.py` e `install.sh`
+### Características do `install.py`
 
-| Característica | `install.py` | `install.sh` |
-|----------------|--------------|--------------|
-| **Plataforma** | Cross-platform (Windows, Linux, macOS) | Linux/macOS apenas |
-| **Dependências** | Python 3.6+ | Bash |
-| **Shell Support** | zsh, bash, PowerShell | zsh, bash |
-| **Wrapper Script** | `.bat` (Windows), `.sh` (Unix) | `.sh` apenas |
-| **Encoding** | UTF-8 com fallback | Sistema padrão |
+| Característica | Valor |
+|----------------|-------|
+| **Plataforma** | Cross-platform (Windows, Linux, macOS) |
+| **Dependências** | Python 3.6+ |
+| **Shell Support** | zsh, bash, PowerShell |
+| **Wrapper Script** | `.bat` (Windows), `.sh` (Unix) |
+| **Encoding** | UTF-8 com fallback |
 
-### Vantagens do `install.py`
+### Vantagens
 
 - ✅ Funciona em Windows, Linux e macOS
 - ✅ Suporte nativo ao PowerShell no Windows

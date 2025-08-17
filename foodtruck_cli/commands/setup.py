@@ -15,7 +15,6 @@ from ..console import (
     print_error,
     print_info,
     print_newline,
-    print_path,
     print_separator,
     print_skip,
     print_step,

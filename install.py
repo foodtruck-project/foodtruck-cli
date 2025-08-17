@@ -12,48 +12,34 @@ import sys
 from pathlib import Path
 
 
-class Colors:
-    """ANSI color codes for terminal output"""
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    YELLOW = "\033[1;33m"
-    BLUE = "\033[0;34m"
-    NC = "\033[0m"  # No Color
-
-
 def print_success(text: str) -> None:
     """Print success message"""
-    print(f"{Colors.GREEN}✅ {text}{Colors.NC}")
+    print(f"\033[0;32m✅ {text}\033[0m")
 
 
 def print_error(text: str) -> None:
     """Print error message"""
-    print(f"{Colors.RED}❌ {text}{Colors.NC}")
+    print(f"\033[0;31m❌ {text}\033[0m")
 
 
 def print_warning(text: str) -> None:
     """Print warning message"""
-    print(f"{Colors.YELLOW}⚠️  {text}{Colors.NC}")
+    print(f"\033[1;33m⚠️  {text}\033[0m")
 
 
 def print_info(text: str) -> None:
     """Print info message"""
-    print(f"{Colors.BLUE}ℹ️  {text}{Colors.NC}")
+    print(f"\033[0;34mi  {text}\033[0m")
 
 
 def print_step(text: str) -> None:
     """Print step message"""
-    print(f"{Colors.BLUE}🔧 {text}{Colors.NC}")
+    print(f"\033[0;34m🔧 {text}\033[0m")
 
 
 def print_title(text: str) -> None:
     """Print title message"""
-    print(f"{Colors.BLUE}🚚 {text}{Colors.NC}")
-
-
-def colored_print(text: str, color: str) -> None:
-    """Print colored text to terminal (legacy function)"""
-    print(f"{color}{text}{Colors.NC}")
+    print(f"\033[0;34m🚚 {text}\033[0m")
 
 
 def get_script_dir() -> Path:
