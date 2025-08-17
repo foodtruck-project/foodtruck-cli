@@ -1,0 +1,49 @@
+[project]
+name = "foodtruck-cli"
+version = "0.1.0"
+description = "A CLI tool for food truck management"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+
+[project.scripts]
+foodtruck = "foodtruck_cli.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.taskipy.tasks]
+# Initial setup - one command to rule them all
+init = "uv sync && uv pip install -e . && ./install.sh && echo '✅ Setup completo! Use: uv run foodtruck ou foodtruck'"
+# Lint code
+lint = "uv run ruff check ."
+# Type check
+typecheck = "uv run mypy ."
+# Test
+test = "uv run pytest"
+
+[tool.taskipy.settings]
+override = false
+
+[dependency-groups]
+dev = [
+    "taskipy>=1.14.1",
+    "mypy>=1.17.1",
+    "pytest>=8.4.1",
+    "ruff>=0.12.9",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "TCH", "Q", "ARG", "PIE", "T20", "PYI", "PT", "RSE", "RET", "SLF", "SLOT", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "NPY", "AIR", "PERF", "FURB", "LOG", "RUF"]
+ignore = ["E501", "B008", "C901", "T201", "PLW1510", "PLC0415"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
