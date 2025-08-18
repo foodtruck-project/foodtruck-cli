@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from cyclopts import App
 from pydantic import BaseModel, Field
 
 from ..console import (
@@ -106,19 +107,14 @@ def setup_website_project(website_path: Path) -> bool:
     return True
 
 
-def setup_command(
+def _setup_environment(
     api_repo: str = "https://github.com/foodtruck-project/foodtruck-api.git",
     website_repo: str = "https://github.com/foodtruck-project/foodtruck-website.git",
     target_dir: str = ".",
     skip_api: bool = False,
     skip_website: bool = False,
 ) -> None:
-    """
-    Setup the complete Food Truck development environment.
-
-    This command will clone both the API and website repositories
-    and install their dependencies.
-    """
+    """Setup the complete Food Truck development environment."""
     print_title("Food Truck Development Environment Setup")
     print_separator()
 
@@ -198,3 +194,62 @@ def setup_command(
         print_newline()
         print_error("Setup failed. Please check the errors above.")
         sys.exit(1)
+
+
+def setup_api_command(
+    api_repo: str = "https://github.com/foodtruck-project/foodtruck-api.git",
+    target_dir: str = ".",
+) -> None:
+    """Setup only the API project"""
+    _setup_environment(api_repo=api_repo, target_dir=target_dir, skip_website=True)
+
+
+def setup_website_command(
+    website_repo: str = "https://github.com/foodtruck-project/foodtruck-website.git",
+    target_dir: str = ".",
+) -> None:
+    """Setup only the website project"""
+    _setup_environment(website_repo=website_repo, target_dir=target_dir, skip_api=True)
+
+
+def setup_all_command(
+    api_repo: str = "https://github.com/foodtruck-project/foodtruck-api.git",
+    website_repo: str = "https://github.com/foodtruck-project/foodtruck-website.git",
+    target_dir: str = ".",
+) -> None:
+    """Setup both API and website projects"""
+    _setup_environment(api_repo=api_repo, website_repo=website_repo, target_dir=target_dir)
+
+
+# Create setup sub-app
+setup_app = App(name="setup", help="Setup the complete Food Truck development environment")
+
+@setup_app.command
+def api(
+    api_repo: str = "https://github.com/foodtruck-project/foodtruck-api.git",
+    target_dir: str = ".",
+):
+    """Setup only the API project"""
+    setup_api_command(api_repo, target_dir)
+
+@setup_app.command
+def website(
+    website_repo: str = "https://github.com/foodtruck-project/foodtruck-website.git",
+    target_dir: str = ".",
+):
+    """Setup only the website project"""
+    setup_website_command(website_repo, target_dir)
+
+@setup_app.command
+def all(
+    api_repo: str = "https://github.com/foodtruck-project/foodtruck-api.git",
+    website_repo: str = "https://github.com/foodtruck-project/foodtruck-website.git",
+    target_dir: str = ".",
+):
+    """Setup both API and website projects"""
+    setup_all_command(api_repo, website_repo, target_dir)
+
+
+def setup_command() -> None:
+    """Setup the complete Food Truck development environment"""
+    setup_app()
