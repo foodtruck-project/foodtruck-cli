@@ -1,10 +1,15 @@
 # yaml-language-server: $schema=https://carapace.sh/schemas/command.json
 name: foodtruck
 description: Food Truck Development CLI
-flags:
-  --help: Display this message and exit
-  --version: Display application version
 commands:
+- name: api
+  description: Manage the Food Truck API project
+  flags:
+    --build: Build Docker images before starting (for 'start' action)
+    --follow: Follow logs (for 'logs' action)
+  completion:
+    flag:
+      action: ["setup", "install", "start", "stop", "status", "logs"]
 - name: check
   description: Check command implementation
 - name: setup
@@ -26,6 +31,8 @@ commands:
     --shell: Shell type (bash, zsh, fish, powershell)
     --output: Output file path for the completion script
     --install: Install the completion script to the appropriate location
+    --refresh: Remove existing completion and regenerate it
+    --manual: Show manual configuration instructions instead of auto-configuring
   completion:
     flag:
       shell: ["bash", "zsh", "fish", "powershell"]
