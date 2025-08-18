@@ -6,7 +6,7 @@ import sys
 
 import cyclopts
 
-from .commands import check_command, completion_command, setup_command
+from .commands import api_command, check_command, completion_command, setup_command
 from .console import print_error
 
 # Create cyclopts app
@@ -17,6 +17,7 @@ app = cyclopts.App(
 )
 
 # Register commands
+app.command(api_command, name="api")
 app.command(setup_command, name="setup")
 app.command(check_command, name="check")
 app.command(completion_command, name="completion")

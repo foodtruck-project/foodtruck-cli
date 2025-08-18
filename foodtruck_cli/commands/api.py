@@ -1,0 +1,253 @@
+"""
+API command for Food Truck CLI
+"""
+
+import os
+import subprocess
+import sys
+from pathlib import Path
+from typing import Optional
+
+from cyclopts import Parameter
+
+from ..console import (
+    print_command,
+    print_error,
+    print_info,
+    print_newline,
+    print_separator,
+    print_step,
+    print_subtitle,
+    print_success,
+    print_title,
+    print_warning,
+)
+
+
+def run_command(cmd: list[str], cwd: Path | None = None, check: bool = True, show_output: bool = True) -> bool:
+    """Run a command and return success status."""
+    try:
+        result = subprocess.run(
+            cmd, cwd=cwd, capture_output=True, text=True, check=check
+        )
+        if show_output and result.stdout.strip():
+            print_success(result.stdout.strip())
+        return True
+    except subprocess.CalledProcessError as e:
+        if check:
+            print_error(f"Error running {' '.join(cmd)}: {e.stderr.strip()}")
+        return False
+
+
+def find_api_project() -> Optional[Path]:
+    """Find the API project directory."""
+    # Check current directory and parent directories
+    current = Path.cwd()
+    
+    # Check if we're already in the API project
+    if (current / "pyproject.toml").exists() and (current / "docker-compose.yaml").exists():
+        return current
+    
+    # Check for foodtruck-api directory
+    api_paths = [
+        current / "foodtruck-api",
+        current / "foodtruck" / "foodtruck-api",
+        current.parent / "foodtruck-api",
+        current.parent / "foodtruck" / "foodtruck-api",
+    ]
+    
+    for api_path in api_paths:
+        if api_path.exists() and (api_path / "pyproject.toml").exists():
+            return api_path
+    
+    return None
+
+
+def setup_venv(api_path: Path) -> bool:
+    """Create a virtual environment for the API project."""
+    print_step("Creating virtual environment...")
+    
+    venv_path = api_path / ".venv"
+    
+    if venv_path.exists():
+        print_warning("Virtual environment already exists. Skipping creation.")
+        return True
+    
+    # Create virtual environment using uv
+    if not run_command(["uv", "venv"], cwd=api_path):
+        print_error("Failed to create virtual environment.")
+        return False
+    
+    print_success("Virtual environment created successfully!")
+    return True
+
+
+def install_dependencies(api_path: Path) -> bool:
+    """Install API dependencies using uv."""
+    print_step("Installing dependencies...")
+    
+    # Sync dependencies using uv
+    if not run_command(["uv", "sync"], cwd=api_path):
+        print_error("Failed to install dependencies.")
+        return False
+    
+    print_success("Dependencies installed successfully!")
+    return True
+
+
+def run_docker_compose(api_path: Path, build: bool = False) -> bool:
+    """Run Docker Compose for the API project."""
+    print_step("Starting Docker Compose services...")
+    
+    # Check if docker-compose.yaml exists
+    compose_file = api_path / "docker-compose.yaml"
+    if not compose_file.exists():
+        print_error("docker-compose.yaml not found in API project.")
+        return False
+    
+    # Build and start services
+    cmd = ["docker", "compose", "up", "-d"]
+    if build:
+        cmd.append("--build")
+    
+    if not run_command(cmd, cwd=api_path, show_output=False):
+        print_error("Failed to start Docker Compose services.")
+        return False
+    
+    print_success("Docker Compose services started successfully!")
+    return True
+
+
+def stop_docker_compose(api_path: Path) -> bool:
+    """Stop Docker Compose services."""
+    print_step("Stopping Docker Compose services...")
+    
+    if not run_command(["docker", "compose", "down"], cwd=api_path, show_output=False):
+        print_error("Failed to stop Docker Compose services.")
+        return False
+    
+    print_success("Docker Compose services stopped successfully!")
+    return True
+
+
+def show_status(api_path: Path) -> bool:
+    """Show Docker Compose service status."""
+    print_step("Checking service status...")
+    
+    result = subprocess.run(
+        ["docker", "compose", "ps"],
+        cwd=api_path,
+        capture_output=True,
+        text=True,
+        check=False
+    )
+    
+    if result.returncode == 0:
+        print_info("Service Status:")
+        print(result.stdout)
+        return True
+    else:
+        print_error("Failed to get service status.")
+        return False
+
+
+def api_command(
+    action: str = "",
+    build: bool = False,
+    follow: bool = False,
+) -> None:
+    """
+    Manage the Food Truck API project.
+    
+    This command helps you set up, install dependencies, and manage
+    the Docker Compose services for the API project.
+    """
+    print_title("Food Truck API Management")
+    print_separator()
+    
+    # Find API project
+    api_path = find_api_project()
+    if not api_path:
+        print_error("API project not found.")
+        print_info("Please run this command from the API project directory or a parent directory.")
+        print_info("Expected locations:")
+        print_info("  - ./foodtruck-api/")
+        print_info("  - ./foodtruck/foodtruck-api/")
+        print_info("  - ../foodtruck-api/")
+        sys.exit(1)
+    
+    print_info(f"Found API project at: {api_path}")
+    print_newline()
+    
+    # Validate action
+    valid_actions = ["setup", "install", "start", "stop", "status", "logs"]
+    if action not in valid_actions:
+        print_error(f"Invalid action: {action}")
+        print_info(f"Valid actions: {', '.join(valid_actions)}")
+        sys.exit(1)
+    
+    success = True
+    
+    if action == "setup":
+        print_subtitle("Setting up API project...")
+        success = setup_venv(api_path) and install_dependencies(api_path)
+        
+        if success:
+            print_newline()
+            print_success("API project setup completed!")
+            print_info("Next steps:")
+            print_command("  foodtruck api start --build  # Start with Docker Compose")
+            print_command("  foodtruck api status         # Check service status")
+    
+    elif action == "install":
+        print_subtitle("Installing API dependencies...")
+        success = setup_venv(api_path) and install_dependencies(api_path)
+        
+        if success:
+            print_newline()
+            print_success("Dependencies installed successfully!")
+    
+    elif action == "start":
+        print_subtitle("Starting API services...")
+        success = run_docker_compose(api_path, build=build)
+        
+        if success:
+            print_newline()
+            print_success("API services started!")
+            print_info("Expected Service URLs:")
+            print_info("  - API Documentation: http://localhost:8000/docs")
+            print_info("  - API ReDoc: http://localhost:8000/redoc")
+            print_info("  - Traefik Dashboard: http://localhost:8080")
+            print_info("  - API (via Traefik): http://foodtruck.docker.localhost")
+            print_info("  - PostgreSQL: localhost:5432")
+            print_info("  - Redis: localhost:6379")
+            print_newline()
+            print_info("Note: Services may take a moment to fully start up.")
+            print_info("Check status with: foodtruck api status")
+    
+    elif action == "stop":
+        print_subtitle("Stopping API services...")
+        success = stop_docker_compose(api_path)
+    
+    elif action == "status":
+        print_subtitle("Checking API service status...")
+        success = show_status(api_path)
+    
+    elif action == "logs":
+        print_subtitle("Showing API service logs...")
+        cmd = ["docker", "compose", "logs"]
+        if follow:
+            cmd.append("-f")
+        
+        # For logs, we want to see the output directly
+        try:
+            subprocess.run(cmd, cwd=api_path, check=True)
+            success = True
+        except subprocess.CalledProcessError as e:
+            print_error(f"Failed to show logs: {e}")
+            success = False
+    
+    if not success:
+        print_newline()
+        print_error("API command failed. Please check the errors above.")
+        sys.exit(1)
