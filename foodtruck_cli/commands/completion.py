@@ -8,6 +8,8 @@ import platform
 import sys
 from pathlib import Path
 
+from cyclopts import App, Parameter
+
 from ..console import print_error, print_info, print_success, print_warning
 
 
@@ -303,15 +305,8 @@ def refresh_carapace_completion(shell: str) -> None:
         sys.exit(1)
 
 
-def completion_command(
-    shell: str = "",
-    output: Path | None = None,
-    install: bool = False,
-    refresh: bool = False,
-    manual: bool = False
-) -> None:
-    """Generate shell completion scripts using carapace-bin"""
-
+def _get_shell_and_validate(shell: str = "") -> tuple[str, Path]:
+    """Get shell type and validate, return (shell, carapace_path)"""
     # Auto-detect shell if not specified
     if not shell:
         if platform.system() == "Windows":
@@ -342,56 +337,75 @@ def completion_command(
     if not carapace_path:
         print_error("Carapace-bin not found. Please run the installation script first: python install.py")
         sys.exit(1)
+    
+    return shell, carapace_path
 
+
+def completion_install_command(
+    shell: str = "",
+    output: Path | None = None
+) -> None:
+    """Install shell completion"""
+    shell, carapace_path = _get_shell_and_validate()
+    
     try:
-        if install:
-            # Check if completion is already installed
-            config_file = get_shell_config_file(shell)
-            spec_path = get_carapace_config_dir() / "foodtruck.yaml"
-            
-            already_installed = False
-            if config_file.exists() and spec_path.exists():
-                with config_file.open("r", encoding="utf-8") as f:
-                    content = f.read()
-                    if "carapace" in content and "foodtruck" in content:
-                        already_installed = True
-            
-            if already_installed:
-                print_info(f"Completion already installed for {shell}")
-                print_info("Use 'foodtruck completion --refresh' to reinstall")
-                return
-            
-            print_success(f"Installing carapace completion for {shell}...")
+        # Check if completion is already installed
+        config_file = get_shell_config_file(shell)
+        spec_path = get_carapace_config_dir() / "foodtruck.yaml"
+        
+        already_installed = False
+        if config_file.exists() and spec_path.exists():
+            with config_file.open("r", encoding="utf-8") as f:
+                content = f.read()
+                if "carapace" in content and "foodtruck" in content:
+                    already_installed = True
+        
+        if already_installed:
+            print_info(f"Completion already installed for {shell}")
+            print_info("Use 'foodtruck completion refresh' to reinstall")
+            return
+        
+        print_success(f"Installing carapace completion for {shell}...")
 
-            # Create spec in user's carapace config directory
-            config_dir = get_carapace_config_dir()
-            spec_path = save_carapace_spec(config_dir)
-            print_success(f"Carapace spec saved to: {spec_path}")
+        # Create spec in user's carapace config directory
+        config_dir = get_carapace_config_dir()
+        spec_path = save_carapace_spec(config_dir)
+        print_success(f"Carapace spec saved to: {spec_path}")
 
-        # Auto-configure shell by default (unless manual mode is requested)
-        if not manual:
-            print_info(f"Auto-configuring {shell} completion...")
-            if auto_configure_shell(shell, carapace_path):
-                print_success(f"Shell configuration completed! Restart your terminal or run 'source {get_shell_config_file(shell)}' to activate.")
-            else:
-                print_warning("Auto-configuration failed. Please configure manually.")
+        # Auto-configure shell
+        print_info(f"Auto-configuring {shell} completion...")
+        if auto_configure_shell(shell, carapace_path):
+            print_success(f"Shell configuration completed! Restart your terminal or run 'source {get_shell_config_file(shell)}' to activate.")
+        else:
+            print_warning("Auto-configuration failed. Please configure manually.")
 
+        print_success("Completion installation completed!")
+
+    except Exception as e:
+        print_error(f"Error: {e}")
+        sys.exit(1)
+
+
+def completion_refresh_command(
+    shell: str = ""
+) -> None:
+    """Refresh shell completion"""
+    shell, carapace_path = _get_shell_and_validate()
+    refresh_carapace_completion(shell)
+
+
+def completion_manual_command(
+    shell: str = "",
+    output: Path | None = None
+) -> None:
+    """Show manual completion instructions"""
+    shell, carapace_path = _get_shell_and_validate(shell)
+    
+    try:
         # Get the proper setup commands for the shell
         setup_commands = get_shell_setup_commands(shell, carapace_path)
-
-        if manual:  # Only show manual instructions if manual mode is requested
-            print_success(f"To enable completion for {shell}, add this to your shell configuration:")
-            print_warning(setup_commands)
-
-        if install:
-            print_success("Completion installation completed!")
-            if manual:
-                if platform.system() == "Windows":
-                    print_warning("You may need to restart your terminal or reload your shell configuration.")
-                    if shell == "cmd":
-                        print_warning("Note: CMD completion is limited. Consider using PowerShell for better completion support.")
-                else:
-                    print_warning("You may need to restart your terminal or reload your shell configuration.")
+        print_success(f"To enable completion for {shell}, add this to your shell configuration:")
+        print_warning(setup_commands)
 
         if output:
             # Save the setup commands to a file
@@ -406,3 +420,31 @@ def completion_command(
     except Exception as e:
         print_error(f"Error: {e}")
         sys.exit(1)
+
+
+# Create completion sub-app
+completion_app = App(name="completion", help="Generate shell completion scripts using carapace-bin")
+
+@completion_app.command
+def install(shell: str = "", output: Path | None = None):
+    """Install shell completion"""
+    completion_install_command(shell, output)
+
+@completion_app.command
+def refresh(shell: str = ""):
+    """Refresh shell completion"""
+    completion_refresh_command(shell)
+
+@completion_app.command
+def manual(shell: str = "", output: Path | None = None):
+    """Show manual completion instructions"""
+    completion_manual_command(shell, output)
+
+def completion_command(
+    shell: str = "",
+    output: Path | None = None
+) -> None:
+    """Generate shell completion scripts using carapace-bin"""
+    
+    # Run the sub-app
+    completion_app()
