@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from cyclopts import Parameter
+from cyclopts import App, Parameter
 
 from ..console import (
     print_command,
@@ -151,17 +151,8 @@ def show_status(api_path: Path) -> bool:
         return False
 
 
-def api_command(
-    action: str = "",
-    build: bool = False,
-    follow: bool = False,
-) -> None:
-    """
-    Manage the Food Truck API project.
-    
-    This command helps you set up, install dependencies, and manage
-    the Docker Compose services for the API project.
-    """
+def _get_api_project() -> Path:
+    """Get and validate API project path"""
     print_title("Food Truck API Management")
     print_separator()
     
@@ -179,75 +170,147 @@ def api_command(
     print_info(f"Found API project at: {api_path}")
     print_newline()
     
-    # Validate action
-    valid_actions = ["setup", "install", "start", "stop", "status", "logs"]
-    if action not in valid_actions:
-        print_error(f"Invalid action: {action}")
-        print_info(f"Valid actions: {', '.join(valid_actions)}")
+    return api_path
+
+
+def api_setup_command() -> None:
+    """Setup API project"""
+    api_path = _get_api_project()
+    
+    print_subtitle("Setting up API project...")
+    success = setup_venv(api_path) and install_dependencies(api_path)
+    
+    if success:
+        print_newline()
+        print_success("API project setup completed!")
+        print_info("Next steps:")
+        print_command("  foodtruck api start --build  # Start with Docker Compose")
+        print_command("  foodtruck api status         # Check service status")
+    else:
+        print_newline()
+        print_error("API setup failed. Please check the errors above.")
         sys.exit(1)
+
+
+def api_install_command() -> None:
+    """Install API dependencies"""
+    api_path = _get_api_project()
     
-    success = True
+    print_subtitle("Installing API dependencies...")
+    success = setup_venv(api_path) and install_dependencies(api_path)
     
-    if action == "setup":
-        print_subtitle("Setting up API project...")
-        success = setup_venv(api_path) and install_dependencies(api_path)
-        
-        if success:
-            print_newline()
-            print_success("API project setup completed!")
-            print_info("Next steps:")
-            print_command("  foodtruck api start --build  # Start with Docker Compose")
-            print_command("  foodtruck api status         # Check service status")
+    if success:
+        print_newline()
+        print_success("Dependencies installed successfully!")
+    else:
+        print_newline()
+        print_error("API install failed. Please check the errors above.")
+        sys.exit(1)
+
+
+def api_start_command(build: bool = False) -> None:
+    """Start API services"""
+    api_path = _get_api_project()
     
-    elif action == "install":
-        print_subtitle("Installing API dependencies...")
-        success = setup_venv(api_path) and install_dependencies(api_path)
-        
-        if success:
-            print_newline()
-            print_success("Dependencies installed successfully!")
+    print_subtitle("Starting API services...")
+    success = run_docker_compose(api_path, build=build)
     
-    elif action == "start":
-        print_subtitle("Starting API services...")
-        success = run_docker_compose(api_path, build=build)
-        
-        if success:
-            print_newline()
-            print_success("API services started!")
-            print_info("Expected Service URLs:")
-            print_info("  - API Documentation: http://localhost:8000/docs")
-            print_info("  - API ReDoc: http://localhost:8000/redoc")
-            print_info("  - Traefik Dashboard: http://localhost:8080")
-            print_info("  - API (via Traefik): http://foodtruck.docker.localhost")
-            print_info("  - PostgreSQL: localhost:5432")
-            print_info("  - Redis: localhost:6379")
-            print_newline()
-            print_info("Note: Services may take a moment to fully start up.")
-            print_info("Check status with: foodtruck api status")
+    if success:
+        print_newline()
+        print_success("API services started!")
+        print_info("Expected Service URLs:")
+        print_info("  - API Documentation: http://localhost:8000/docs")
+        print_info("  - API ReDoc: http://localhost:8000/redoc")
+        print_info("  - Traefik Dashboard: http://localhost:8080")
+        print_info("  - API (via Traefik): http://foodtruck.docker.localhost")
+        print_info("  - PostgreSQL: localhost:5432")
+        print_info("  - Redis: localhost:6379")
+        print_newline()
+        print_info("Note: Services may take a moment to fully start up.")
+        print_info("Check status with: foodtruck api status")
+    else:
+        print_newline()
+        print_error("API start failed. Please check the errors above.")
+        sys.exit(1)
+
+
+def api_stop_command() -> None:
+    """Stop API services"""
+    api_path = _get_api_project()
     
-    elif action == "stop":
-        print_subtitle("Stopping API services...")
-        success = stop_docker_compose(api_path)
-    
-    elif action == "status":
-        print_subtitle("Checking API service status...")
-        success = show_status(api_path)
-    
-    elif action == "logs":
-        print_subtitle("Showing API service logs...")
-        cmd = ["docker", "compose", "logs"]
-        if follow:
-            cmd.append("-f")
-        
-        # For logs, we want to see the output directly
-        try:
-            subprocess.run(cmd, cwd=api_path, check=True)
-            success = True
-        except subprocess.CalledProcessError as e:
-            print_error(f"Failed to show logs: {e}")
-            success = False
+    print_subtitle("Stopping API services...")
+    success = stop_docker_compose(api_path)
     
     if not success:
         print_newline()
-        print_error("API command failed. Please check the errors above.")
+        print_error("API stop failed. Please check the errors above.")
         sys.exit(1)
+
+
+def api_status_command() -> None:
+    """Check API service status"""
+    api_path = _get_api_project()
+    
+    print_subtitle("Checking API service status...")
+    success = show_status(api_path)
+    
+    if not success:
+        print_newline()
+        print_error("API status check failed. Please check the errors above.")
+        sys.exit(1)
+
+
+def api_logs_command(follow: bool = False) -> None:
+    """Show API service logs"""
+    api_path = _get_api_project()
+    
+    print_subtitle("Showing API service logs...")
+    cmd = ["docker", "compose", "logs"]
+    if follow:
+        cmd.append("-f")
+    
+    # For logs, we want to see the output directly
+    try:
+        subprocess.run(cmd, cwd=api_path, check=True)
+    except subprocess.CalledProcessError as e:
+        print_error(f"Failed to show logs: {e}")
+        sys.exit(1)
+
+
+# Create API sub-app
+api_app = App(name="api", help="Manage the Food Truck API project")
+
+@api_app.command
+def setup():
+    """Setup API project"""
+    api_setup_command()
+
+@api_app.command
+def install():
+    """Install API dependencies"""
+    api_install_command()
+
+@api_app.command
+def start(build: bool = False):
+    """Start API services"""
+    api_start_command(build)
+
+@api_app.command
+def stop():
+    """Stop API services"""
+    api_stop_command()
+
+@api_app.command
+def status():
+    """Check API service status"""
+    api_status_command()
+
+@api_app.command
+def logs(follow: bool = False):
+    """Show API service logs"""
+    api_logs_command(follow)
+
+
+def api_command() -> None:
+    """Manage the Food Truck API project"""
+    api_app()

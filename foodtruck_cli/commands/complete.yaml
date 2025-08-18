@@ -4,36 +4,36 @@ description: Food Truck Development CLI
 commands:
 - name: api
   description: Manage the Food Truck API project
-  flags:
-    --build: Build Docker images before starting (for 'start' action)
-    --follow: Follow logs (for 'logs' action)
-  completion:
-    flag:
-      action: ["setup", "install", "start", "stop", "status", "logs"]
+  commands:
+    - name: setup
+      description: Setup API project
+    - name: install
+      description: Install API dependencies
+    - name: start
+      description: Start API services
+    - name: stop
+      description: Stop API services
+    - name: status
+      description: Check API service status
+    - name: logs
+      description: Show API service logs
 - name: check
   description: Check command implementation
 - name: setup
   description: Setup the complete Food Truck development environment
-  flags:
-    --api-repo: API repository URL
-    --website-repo: Website repository URL
-    --target-dir: Target directory to clone repositories
-    --skip-api: Skip API repository setup
-    --skip-website: Skip website repository setup
-  completion:
-    flag:
-      api-repo: ["https://github.com/foodtruck-project/foodtruck-api.git", "https://github.com/custom/foodtruck-api.git", "https://github.com/company/api-repo.git"]
-      website-repo: ["https://github.com/foodtruck-project/foodtruck-website.git", "https://github.com/custom/foodtruck-website.git", "https://github.com/company/website-repo.git"]
-      target-dir: ["$directories", ".", "./projects", "~/projects"]
+  commands:
+    - name: api
+      description: Setup only the API project
+    - name: website
+      description: Setup only the website project
+    - name: all
+      description: Setup both API and website projects
 - name: completion
   description: Generate shell completion scripts using carapace-bin
-  flags:
-    --shell: Shell type (bash, zsh, fish, powershell)
-    --output: Output file path for the completion script
-    --install: Install the completion script to the appropriate location
-    --refresh: Remove existing completion and regenerate it
-    --manual: Show manual configuration instructions instead of auto-configuring
-  completion:
-    flag:
-      shell: ["bash", "zsh", "fish", "powershell"]
-      output: ["$files", "./completion.sh", "~/.bash_completion"]
+  commands:
+    - name: install
+      description: Install shell completion
+    - name: refresh
+      description: Refresh shell completion
+    - name: manual
+      description: Show manual completion instructions
