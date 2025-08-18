@@ -52,25 +52,75 @@ foodtruck check
 # Configurar ambiente de desenvolvimento
 foodtruck setup
 
+# Gerenciar API backend
+foodtruck api
+
 # Gerar scripts de completion
 foodtruck completion
 ```
 
+### Comandos de Setup:
+```bash
+# Setup completo (API + Website)
+foodtruck setup all
 
+# Setup apenas API
+foodtruck setup api
+
+# Setup apenas Website
+foodtruck setup website
+
+# Setup com repositórios customizados
+foodtruck setup api --api-repo https://github.com/custom/foodtruck-api.git
+foodtruck setup website --website-repo https://github.com/custom/foodtruck-website.git
+```
+
+### Comandos de API:
+```bash
+# Setup do projeto API
+foodtruck api setup
+
+# Instalar dependências da API
+foodtruck api install
+
+# Iniciar serviços da API
+foodtruck api start
+
+# Iniciar com rebuild das imagens Docker
+foodtruck api start --build
+
+# Parar serviços da API
+foodtruck api stop
+
+# Verificar status dos serviços
+foodtruck api status
+
+# Ver logs dos serviços
+foodtruck api logs
+
+# Acompanhar logs em tempo real
+foodtruck api logs --follow
+```
 
 ### Shell Completion:
 ```bash
-# Gerar scripts de completion para todos os shells
-foodtruck completion
+# Instalar completion (auto-configuração)
+foodtruck completion install
 
-# Instalar completion para um shell específico
-foodtruck completion bash --install
-foodtruck completion zsh --install
-foodtruck completion fish --install
-foodtruck completion powershell --install
+# Instalar para shell específico
+foodtruck completion install --shell zsh
+foodtruck completion install --shell bash
+foodtruck completion install --shell fish
+foodtruck completion install --shell powershell
 
-# Gerar e salvar em arquivo específico
-foodtruck completion bash --output ~/.local/share/bash-completion/completions/foodtruck
+# Refresh completion (remove e reinstala)
+foodtruck completion refresh
+
+# Instruções manuais
+foodtruck completion manual
+
+# Salvar instruções em arquivo
+foodtruck completion manual --output ~/.local/share/bash-completion/completions/foodtruck
 ```
 
 ### Qualidade de Código:
@@ -96,9 +146,10 @@ foodtruck-cli/
 │   └── commands/          # Comandos do CLI
 │       ├── __init__.py    # Inicialização dos comandos
 │       ├── check.py       # Comando de verificação
+│       ├── api.py         # Comando de gerenciamento da API
 │       ├── completion.py  # Comando de completion
 │       ├── setup.py       # Comando de configuração
-│       └── foodtruck.yaml # Especificação do carapace para completion
+│       └── complete.yaml  # Especificação do carapace para completion
 ├── pyproject.toml        # Configuração do projeto
 ├── install.py            # Script de instalação Python (cross-platform)
 └── README.md            # Este arquivo
@@ -112,9 +163,10 @@ foodtruck-cli/
 |----------------|-------|
 | **Plataforma** | Cross-platform (Windows, Linux, macOS) |
 | **Dependências** | Python 3.6+ |
-| **Shell Support** | zsh, bash, PowerShell |
+| **Shell Support** | zsh, bash, PowerShell, fish, cmd |
 | **Wrapper Script** | `.bat` (Windows), `.sh` (Unix) |
 | **Encoding** | UTF-8 com fallback |
+| **Auto-completion** | carapace-bin integrado |
 
 ### Vantagens
 
@@ -124,9 +176,35 @@ foodtruck-cli/
 - ✅ Criação automática de diretórios
 - ✅ Mensagens de erro mais detalhadas
 - ✅ Código mais modular e testável
-
-- ✅ Suporte a Bash, Zsh e PowerShell
+- ✅ Suporte a Bash, Zsh, Fish, PowerShell e CMD
 - ✅ Auto-completion com carapace-bin
+- ✅ Estrutura de subcomandos intuitiva
+
+## 🚀 Funcionalidades
+
+### Auto-completion com carapace-bin
+O CLI utiliza o carapace-bin para fornecer auto-completion avançado em todos os shells suportados:
+
+- **Instalação automática**: Configura automaticamente o shell
+- **Refresh simples**: Remove e reinstala completion com um comando
+- **Multi-shell**: Suporte para bash, zsh, fish, powershell e cmd
+- **Intuitivo**: Completion inteligente para todos os subcomandos
+
+### Gerenciamento de API Backend
+Comandos dedicados para gerenciar o projeto API backend:
+
+- **Setup automático**: Criação de ambiente virtual e instalação de dependências
+- **Docker Compose**: Gerenciamento completo dos serviços (FastAPI, PostgreSQL, Redis, Traefik)
+- **Logs e status**: Monitoramento em tempo real dos serviços
+- **Build flexível**: Opção de rebuild das imagens Docker
+
+### Setup de Ambiente
+Comandos para configurar todo o ambiente de desenvolvimento:
+
+- **Setup completo**: API + Website em um comando
+- **Setup seletivo**: Apenas API ou apenas Website
+- **Repositórios customizados**: Suporte para forks e repositórios personalizados
+- **Estrutura organizada**: Criação automática da estrutura de diretórios
 
 ## 🔧 Configuração de Qualidade
 
