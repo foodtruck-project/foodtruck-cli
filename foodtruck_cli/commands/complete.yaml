@@ -26,7 +26,7 @@ commands:
       description: Setup only the API project
     - name: website
       description: Setup only the website project
-    - name: all
+    - name: setup-all
       description: Setup both API and website projects
 - name: completion
   description: Generate shell completion scripts using carapace-bin
