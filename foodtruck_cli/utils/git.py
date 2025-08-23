@@ -12,4 +12,7 @@ def clone_repository(repo_url: str, target_path: Path) -> bool:
         print_warning(f"Directory {target_path} already exists. Skipping clone.")
         return None
 
-    return run_command(["git", "clone", repo_url, str(target_path)])
+    result = run_command(
+        ["git", "clone", repo_url, str(target_path)], print_output=True
+    )
+    return result.success
