@@ -2,7 +2,6 @@
 API command for Food Truck CLI
 """
 
-import subprocess
 import sys
 from pathlib import Path
 
@@ -60,7 +59,8 @@ def setup_venv(api_path: Path) -> bool:
         return True
 
     # Create virtual environment using uv
-    if not run_command(["uv", "venv"], cwd=api_path):
+    result = run_command(["uv", "venv"], cwd=api_path, print_output=True)
+    if not result.success:
         print_error("Failed to create virtual environment.")
         return False
 
@@ -73,7 +73,8 @@ def install_dependencies(api_path: Path) -> bool:
     print_step("Installing dependencies...")
 
     # Sync dependencies using uv
-    if not run_command(["uv", "sync"], cwd=api_path):
+    result = run_command(["uv", "sync"], cwd=api_path, print_output=True)
+    if not result.success:
         print_error("Failed to install dependencies.")
         return False
 
@@ -96,7 +97,8 @@ def run_docker_compose(api_path: Path, build: bool = False) -> bool:
     if build:
         cmd.append("--build")
 
-    if not run_command(cmd, cwd=api_path, show_output=False):
+    result = run_command(cmd, cwd=api_path)
+    if not result.success:
         print_error("Failed to start Docker Compose services.")
         return False
 
@@ -108,7 +110,8 @@ def stop_docker_compose(api_path: Path) -> bool:
     """Stop Docker Compose services."""
     print_step("Stopping Docker Compose services...")
 
-    if not run_command(["docker", "compose", "down"], cwd=api_path, show_output=False):
+    result = run_command(["docker", "compose", "down"], cwd=api_path)
+    if not result.success:
         print_error("Failed to stop Docker Compose services.")
         return False
 
@@ -120,21 +123,15 @@ def show_status(api_path: Path) -> bool:
     """Show Docker Compose service status."""
     print_step("Checking service status...")
 
-    result = subprocess.run(
-        ["docker", "compose", "ps"],
-        cwd=api_path,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = run_command(["docker", "compose", "ps"], cwd=api_path)
 
-    if result.returncode == 0:
+    if result.success:
         print_info("Service Status:")
         print(result.stdout)
         return True
-    else:
-        print_error("Failed to get service status.")
-        return False
+
+    print_error("Failed to get service status.")
+    return False
 
 
 def _get_api_project() -> Path:
@@ -258,10 +255,9 @@ def api_logs_command(follow: bool = False) -> None:
         cmd.append("-f")
 
     # For logs, we want to see the output directly
-    try:
-        subprocess.run(cmd, cwd=api_path, check=True)
-    except subprocess.CalledProcessError as e:
-        print_error(f"Failed to show logs: {e}")
+    result = run_command(cmd, cwd=api_path, capture_output=False)
+    if not result.success:
+        print_error(f"Failed to show logs: {result.stderr}")
         sys.exit(1)
 
 

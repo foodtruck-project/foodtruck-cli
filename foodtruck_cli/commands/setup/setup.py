@@ -27,12 +27,14 @@ def _install_api_dependencies(
     """Install project dependencies using UV."""
     print_step(f"Setting up {project_name} dependencies...")
 
-    if not run_command(["uv", "--version"], cwd=project_path):
+    result = run_command(["uv", "--version"], cwd=project_path)
+    if not result.success:
         return ProjectSetupResult(
             success=False, message="UV is not available. Please install UV first."
         )
 
-    if not run_command(["uv", "sync"], cwd=project_path):
+    result = run_command(["uv", "sync"], cwd=project_path, print_output=True)
+    if not result.success:
         return ProjectSetupResult(
             success=False, message=f"Failed to install {project_name} dependencies."
         )

@@ -1,64 +1,67 @@
 import subprocess
 from pathlib import Path
+from typing import NamedTuple
 
 from .console import print_error, print_success
 
 
-def run_command(cmd: list[str], cwd: Path | None = None) -> bool:
-    """Execute a shell command and return success status.
+class CommandResult(NamedTuple):
+    """Result of a command execution."""
 
-    Runs a command using subprocess with comprehensive error handling including
-    timeouts, missing commands, permission errors, and execution failures.
+    success: bool
+    stdout: str
+    stderr: str
+    returncode: int
 
-    Args:
-        cmd: List of command arguments (e.g., ['git', 'clone', 'repo'])
-        cwd: Working directory for command execution (default: current directory)
 
-    Returns:
-        bool: True if command executed successfully, False otherwise
-
-    Raises:
-        No exceptions are raised - all errors are handled internally and logged
-    """
-    success = False
-
+def run_command(
+    cmd: list[str],
+    cwd: Path | None = None,
+    timeout: int = 300,
+    capture_output: bool = True,
+    print_output: bool = False,
+) -> CommandResult:
+    """Execute a shell command and return comprehensive result."""
     if not cmd:
-        print_error("No command provided")
-    else:
-        try:
-            result = subprocess.run(
-                cmd,
-                cwd=cwd,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=300,  # 5 minute timeout
-            )
-            # Only print output if there's something meaningful
-            if result.stdout and result.stdout.strip():
-                print_success(result.stdout.strip())
-            success = True
+        error_msg = "No command provided"
+        if print_output:
+            print_error(error_msg)
+        return CommandResult(False, "", error_msg, -1)
 
-        except subprocess.CalledProcessError as e:
-            error_msg = (
-                e.stderr.strip()
-                if e.stderr
-                else f"Command failed with exit code {e.returncode}"
-            )
-            print_error(f"Error running '{' '.join(cmd)}': {error_msg}")
+    error_msg = ""
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=cwd,
+            capture_output=capture_output,
+            text=True,
+            check=True,
+            timeout=timeout,
+        )
+        if print_output and result.stdout and result.stdout.strip():
+            print_success(result.stdout.strip())
+        return CommandResult(
+            True,
+            result.stdout.strip() if result.stdout else "",
+            result.stderr.strip() if result.stderr else "",
+            result.returncode,
+        )
+    except subprocess.CalledProcessError as e:
+        error_msg = (
+            e.stderr.strip()
+            if e.stderr
+            else f"Command failed with exit code {e.returncode}"
+        )
+    except (FileNotFoundError, PermissionError) as e:
+        if isinstance(e, FileNotFoundError):
+            error_msg = f"Command '{cmd[0]}' not found. Please ensure it's installed and in your PATH"
+        else:
+            error_msg = f"Permission denied when running '{' '.join(cmd)}'"
+    except subprocess.TimeoutExpired:
+        error_msg = f"Command '{' '.join(cmd)}' timed out after {timeout} seconds"
+    except Exception as e:
+        error_msg = f"Unexpected error: {e!s}"
 
-        except subprocess.TimeoutExpired:
-            print_error(f"Command '{' '.join(cmd)}' timed out after 5 minutes")
-
-        except FileNotFoundError:
-            print_error(
-                f"Command '{cmd[0]}' not found. Please ensure it's installed and in your PATH"
-            )
-
-        except PermissionError:
-            print_error(f"Permission denied when running '{' '.join(cmd)}'")
-
-        except Exception as e:
-            print_error(f"Unexpected error running '{' '.join(cmd)}': {e!s}")
-
-    return success
+    if print_output and error_msg:
+        print_error(error_msg)
+    return CommandResult(False, "", error_msg, -1)
