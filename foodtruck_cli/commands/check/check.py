@@ -3,7 +3,7 @@
 import subprocess
 import sys
 
-from ..utils.console import (
+from ...utils.console import (
     print_error,
     print_info,
     print_newline,

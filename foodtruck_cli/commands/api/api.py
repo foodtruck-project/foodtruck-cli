@@ -8,7 +8,7 @@ from pathlib import Path
 
 from cyclopts import App
 
-from ..utils.console import (
+from ...utils.console import (
     print_command,
     print_error,
     print_info,
@@ -20,7 +20,7 @@ from ..utils.console import (
     print_title,
     print_warning,
 )
-from ..utils.run_command import run_command
+from ...utils.run_command import run_command
 
 
 def find_api_project() -> Path | None:

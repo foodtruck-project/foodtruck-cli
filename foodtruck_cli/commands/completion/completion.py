@@ -10,7 +10,7 @@ from pathlib import Path
 
 from cyclopts import App, Parameter
 
-from ..utils.console import print_error, print_info, print_success, print_warning
+from ...utils.console import print_error, print_info, print_success, print_warning
 
 
 def get_carapace_path() -> Path | None:
