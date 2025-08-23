@@ -6,13 +6,8 @@ import sys
 
 import cyclopts
 
-from .commands import (
-    api_app, 
-    check_command, 
-    completion_app, 
-    setup_app
-)
-from .console import print_error
+from .commands import api_app, check_command, completion_app, setup_app
+from .utils.console import print_error
 
 # Create cyclopts app
 app = cyclopts.App(
