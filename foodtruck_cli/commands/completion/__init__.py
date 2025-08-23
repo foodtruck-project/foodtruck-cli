@@ -2,8 +2,9 @@
 Food Truck CLI Completion Commands Package
 """
 
-from .completion import completion_app
+from .app import completion_app, completion_command
 
 __all__ = [
-    "completion_app"
+    "completion_app",
+    "completion_command"
 ]
