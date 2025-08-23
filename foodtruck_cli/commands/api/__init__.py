@@ -2,8 +2,6 @@
 Food Truck CLI API Commands Package
 """
 
-from .api import api_app
+from .app import api_app, api_command
 
-__all__ = [
-    "api_app"
-]
+__all__ = ["api_app", "api_command"]
